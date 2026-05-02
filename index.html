@@ -219,8 +219,17 @@ function App(){
   const[age,setAge]=useState(55);
   const[gender,setGender]=useState('female');
   const[allocs,setAllocs]=useState({});
-  const[fundData,setFundData]=useState(STATIC_FUND_DATA);
-  const[dataDate,setDataDate]=useState('2026-04-02（內建備份）');
+  const[fundData,setFundData]=useState(()=>{
+    try{
+      const saved=localStorage.getItem('anda_fund_data');
+      if(saved){const parsed=JSON.parse(saved);if(Object.keys(parsed).length>0)return parsed;}
+    }catch(e){}
+    return STATIC_FUND_DATA;
+  });
+  const[dataDate,setDataDate]=useState(()=>{
+    try{return localStorage.getItem('anda_data_date')||'2026-04-02（內建備份）';}catch(e){}
+    return '2026-04-02（內建備份）';
+  });
   const[refreshing,setRefreshing]=useState(false);
   const[progress,setProgress]=useState({cur:0,total:0});
   const[toast,setToast]=useState(null);
@@ -265,9 +274,11 @@ function App(){
       }catch(e){ fail++; }
       await new Promise(r=>setTimeout(r,100));
     }
-    setFundData(nd);setProgress({cur:0,total:0});setRefreshing(false);
+    setFundData(nd);
+    try{localStorage.setItem('anda_fund_data',JSON.stringify(nd));}catch(e){}
+    setProgress({cur:0,total:0});setRefreshing(false);
     if(ok>0){
-      setIsLive(true);setDataDate(`${today}（即時更新）`);
+      setIsLive(true);setDataDate(`${today}（即時更新）`);try{localStorage.setItem('anda_data_date',`${today}（即時更新）`);}catch(e){}
       showToast(fail===0?`✅ 全部 ${ok} 支基金更新成功！`:`⚠️ ${ok} 支成功，${fail} 支使用備份資料`,fail===0?'success':'warning');
     }else{
       showToast('❌ MoneyDJ 無法連線，目前顯示內建備份資料','error');
@@ -362,7 +373,7 @@ function App(){
                     {groups.map(group=>{
                       const base=group[0],info=getFundInfo(base.name,fundData);
                       const div=info?.dividend_data?.[0],nav=info?.latest_nav||0,amt=div?.amount||0;
-                      const bDate=div?.basis_date||'-',kRate=div?.annual_rate!=null?div.annual_rate.toFixed(2):(nav>0&&amt>0?((amt/nav)*12*100).toFixed(2):'-');
+                      const bDate=div?.basis_date||'-',kRate=div?.annual_rate!=null?div.annual_rate.toFixed(2):'-',nRate=nav>0&&amt>0?((amt/nav)*12*100).toFixed(2):'-';
                       return group.map((cfg,ci)=>{
                         const k=`${cfg.code}|${cfg.dividend_type}`,a=allocs[k]||0;
                         const m=nav>0?(inv*10000*a/100)/nav*amt:0;
@@ -380,7 +391,7 @@ function App(){
                             {ci===0&&<td rowSpan={group.length} className="right">{kRate}</td>}
                             {ci===0&&<td rowSpan={group.length} className="right">{amt>0?amt.toFixed(4):'-'}</td>}
                             {ci===0&&<td rowSpan={group.length} className="right">{nav>0?nav.toFixed(4):'-'}</td>}
-                            {ci===0&&<td rowSpan={group.length} className="right">{kRate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className="right">{nRate}</td>}
                           </tr>
                         );
                       });
