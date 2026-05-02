@@ -1,14 +1,14 @@
 // Vercel Serverless Function：從 MoneyDJ 取得基金即時資料
-// 已修正所有頁面格式，支援 yp011000、yp011001、wb05
+// 解析邏輯基於 debug-fund 回傳的真實 HTML 結構
 
-const HEADERS = {
+const FETCH_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
   'Accept-Language': 'zh-TW,zh;q=0.9',
   'Referer': 'https://www.moneydj.com/',
 };
 
-// 安達內部代碼 → MoneyDJ 正確代碼（來自基金連結.xlsx）
+// 安達內部代碼 → MoneyDJ 代碼（來自基金連結.xlsx）
 const CODE_MAP = {
   'BGUAL040': { code: 'TLZF9',   page: 'yp011001' },
   'BSUAL044': { code: 'TLZF9',   page: 'yp011001' },
@@ -43,34 +43,38 @@ const CODE_MAP = {
   'ECAML002': { code: 'shzt7',   page: 'yp011001' },
 };
 
-// 解析淨值（支援所有 MoneyDJ 頁面格式）
+// 解析淨值（根據 debug 確認：MoneyDJ 用 class="t3n2" 存淨值）
 function parseNav(html) {
-  let nav = null, date = null;
+  let nav = null;
+  let date = null;
 
-  // MoneyDJ 使用 class="t3n2" 或 class="t3n1" 存放淨值
-  const navPatterns = [
-    /<td[^>]*class="t3n[12]"[^>]*>\s*([\d,]+\.[\d]{2,6})\s*<\/td>/gi,
-    /<td[^>]*>\s*([1-9][\d]{0,4}\.[\d]{2,6})\s*<\/td>/gi,
-    /<span[^>]*>\s*([1-9][\d]{0,4}\.[\d]{2,6})\s*<\/span>/gi,
-  ];
-
-  for (const p of navPatterns) {
-    const matches = [...html.matchAll(p)];
-    for (const m of matches) {
-      const v = parseFloat(m[1].replace(/,/g, ''));
-      if (v >= 0.1 && v <= 50000) { nav = v; break; }
-    }
-    if (nav) break;
+  // 方法一：MoneyDJ class="t3n2" 或 class="t3n1"（最精確）
+  const t3Matches = html.match(/<td[^>]*class="t3n[12]"[^>]*>([\d,]+\.[\d]{2,6})<\/td>/gi) || [];
+  for (const m of t3Matches) {
+    const numStr = m.replace(/<[^>]+>/g, '').trim();
+    const v = parseFloat(numStr.replace(/,/g, ''));
+    if (v >= 0.1 && v <= 50000) { nav = v; break; }
   }
 
-  // 取最新日期
+  // 方法二：備用 - 任何 td 中的純小數
+  if (!nav) {
+    const tdMatches = html.match(/<td[^>]*>([\d]+\.[\d]{2,6})<\/td>/gi) || [];
+    for (const m of tdMatches) {
+      const numStr = m.replace(/<[^>]+>/g, '').trim();
+      const v = parseFloat(numStr.replace(/,/g, ''));
+      if (v >= 0.1 && v <= 50000) { nav = v; break; }
+    }
+  }
+
+  // 日期：從所有日期中取最新的
+  const dateMatches = html.match(/\d{4}\/\d{1,2}\/\d{1,2}/g) || [];
   let bestDate = null;
-  const allDates = [...html.matchAll(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/g)];
-  for (const m of allDates) {
-    const y = parseInt(m[1]);
+  for (const d of dateMatches) {
+    const parts = d.split('/');
+    const y = parseInt(parts[0]);
     if (y >= 2020) {
-      const candidate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
-      if (!bestDate || candidate > bestDate) bestDate = candidate;
+      const normalized = parts[0] + '-' + parts[1].padStart(2,'0') + '-' + parts[2].padStart(2,'0');
+      if (!bestDate || normalized > bestDate) bestDate = normalized;
     }
   }
   date = bestDate;
@@ -78,53 +82,54 @@ function parseNav(html) {
   return { nav, date };
 }
 
-// 解析配息資料（MoneyDJ XHTML 格式）
+// 解析配息（MoneyDJ 配息頁面 yp131）
 function parseDiv(html) {
   const divs = [];
 
-  // MoneyDJ 配息表格：class="t3t1" 日期 + class="t3n1"/"t3n2" 金額
-  // 先找有配息/除息相關的表格
+  // 找所有表格，尋找配息/除息相關表格
   const tables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
-  
   for (const tbl of tables) {
-    if (!/配息|除息|dividend|ex.div/i.test(tbl)) continue;
-    
+    if (!/配息|除息|dividend/i.test(tbl)) continue;
+
     const rows = tbl.match(/<tr[\s\S]*?<\/tr>/gi) || [];
     for (const row of rows.slice(1, 8)) {
-      // 取出所有 td 文字
       const cells = (row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || [])
         .map(c => c.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
-      
-      // 找日期欄（格式：YYYY/MM/DD）
+
+      // 找日期欄（YYYY/MM/DD 格式）
       for (let i = 0; i < cells.length; i++) {
-        const dateStr = cells[i].trim();
-        if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(dateStr)) {
-          // 找下一個數字欄作為配息金額
+        const cell = cells[i].trim();
+        if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(cell)) {
+          // 下一欄為配息金額
           for (let j = i + 1; j < cells.length; j++) {
             const amount = parseFloat(cells[j].replace(/,/g, ''));
             if (!isNaN(amount) && amount > 0 && amount < 10000) {
               divs.push({
-                basis_date: dateStr.replace(/\//g, '-'),
+                basis_date: cell.replace(/\//g, '-'),
                 amount,
               });
               break;
             }
           }
-          if (divs.length > 0) break;
+          break;
         }
       }
+      if (divs.length >= 3) break;
     }
     if (divs.length > 0) break;
   }
 
-  // 備用：從整個 HTML 找日期+金額配對
+  // 備用：從整頁 HTML 找日期+金額配對
   if (divs.length === 0) {
-    const dateAmtPattern = /(\d{4}\/\d{2}\/\d{2})[^\d<]{0,50}([\d]+\.[\d]{4,6})/g;
-    const matches = [...html.matchAll(dateAmtPattern)];
+    const matches = html.match(/(\d{4}\/\d{2}\/\d{2})[^<]{0,80}?([\d]+\.[\d]{4,6})/g) || [];
     for (const m of matches.slice(0, 3)) {
-      const amount = parseFloat(m[2]);
-      if (amount > 0 && amount < 10000) {
-        divs.push({ basis_date: m[1].replace(/\//g, '-'), amount });
+      const dateMatch = m.match(/(\d{4}\/\d{2}\/\d{2})/);
+      const numMatch = m.match(/([\d]+\.[\d]{4,6})/);
+      if (dateMatch && numMatch) {
+        const amount = parseFloat(numMatch[1]);
+        if (amount > 0 && amount < 10000) {
+          divs.push({ basis_date: dateMatch[1].replace(/\//g, '-'), amount });
+        }
       }
     }
   }
@@ -132,32 +137,35 @@ function parseDiv(html) {
   return divs;
 }
 
-// 嘗試多個頁面取得淨值（備援機制）
-async function fetchNavWithFallback(djCode, primaryPage) {
-  // 依序嘗試的頁面類型
-  const pages = [primaryPage, 'yp011001', 'yp011000'].filter((v, i, a) => a.indexOf(v) === i);
+async function fetchPage(url) {
+  const res = await fetch(url, {
+    headers: FETCH_HEADERS,
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.text();
+}
 
+// 嘗試多個頁面取得淨值（備援機制）
+async function fetchNav(djCode, primaryPage) {
+  const pages = [primaryPage, 'yp011001', 'yp011000'].filter((v,i,a)=>a.indexOf(v)===i);
   for (const page of pages) {
     try {
       const url = `https://www.moneydj.com/funddj/yp/${page}.djhtm?a=${djCode}`;
-      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(10000) });
-      if (!res.ok) continue;
-      const html = await res.text();
+      const html = await fetchPage(url);
       const { nav, date } = parseNav(html);
-      if (nav) return { nav, date, url, page };
+      if (nav) return { nav, date, url };
     } catch {}
   }
   return null;
 }
 
-async function fetchDivWithFallback(djCode) {
+async function fetchDiv(djCode) {
   const pages = ['yp131', 'yp011001', 'yp011000'];
   for (const page of pages) {
     try {
       const url = `https://www.moneydj.com/funddj/yp/${page}.djhtm?a=${djCode}`;
-      const res = await fetch(url, { headers: HEADERS, signal: AbortSignal.timeout(10000) });
-      if (!res.ok) continue;
-      const html = await res.text();
+      const html = await fetchPage(url);
       const divs = parseDiv(html);
       if (divs.length > 0) return { divs, url };
     } catch {}
@@ -175,7 +183,7 @@ module.exports = async (req, res) => {
 
   const mapping = CODE_MAP[code];
   if (!mapping) {
-    res.status(404).json({ error: `找不到 ${code} 的 MoneyDJ 代碼，將使用備份資料` });
+    res.status(404).json({ error: `找不到 ${code} 的 MoneyDJ 代碼` });
     return;
   }
 
@@ -183,14 +191,14 @@ module.exports = async (req, res) => {
 
   try {
     if (type === 'div') {
-      const result = await fetchDivWithFallback(djCode);
+      const result = await fetchDiv(djCode);
       if (result) {
         res.status(200).json({ ok: true, djCode, code, dividend_data: result.divs });
       } else {
         res.status(404).json({ error: '無法取得配息資料', djCode });
       }
     } else {
-      const result = await fetchNavWithFallback(djCode, page);
+      const result = await fetchNav(djCode, page);
       if (result) {
         res.status(200).json({ ok: true, djCode, code, latest_nav: result.nav, latest_nav_date: result.date });
       } else {
