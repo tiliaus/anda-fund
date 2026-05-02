@@ -146,8 +146,8 @@ const CURRENCY_NAMES={USD:'美元',ZAR:'南非幣',AUD:'澳幣'};
 async function fetchViaProxy(code, type) {
   const url = `/api/fund-proxy?code=${code}&type=${type}`;
   const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  // 不管成功或失敗都回傳 JSON（讓 parseNav/parseDiv 自行處理）
+  try { return await res.json(); } catch(e) { return null; }
 }
 
 function parseNav(json) {
@@ -245,17 +245,24 @@ function App(){
       const{code,dataKey}=list[i];
       setProgress({cur:i+1,total:list.length});
       try{
-        const[navJson,divJson]=await Promise.all([
-          fetchViaProxy(code,'nav'),
-          fetchViaProxy(code,'div'),
-        ]);
-        const np=parseNav(navJson), dp=parseDiv(divJson);
-        if(np&&np.latest_nav>0){
-          nd[dataKey]={...(nd[dataKey]||{}),latest_nav:np.latest_nav,latest_nav_date:np.latest_nav_date||today,
-            dividend_data:dp&&dp.length>0?dp:(nd[dataKey]?.dividend_data||[])};
+        // nav 和 div 分開呼叫，div 失敗不影響 nav 成功
+        let navJson = null, divJson = null;
+        try{ navJson = await fetchViaProxy(code,'nav'); }catch(e){}
+        try{ divJson = await fetchViaProxy(code,'div'); }catch(e){}
+
+        const np = parseNav(navJson);
+        const dp = parseDiv(divJson);
+
+        if(np && np.latest_nav > 0){
+          nd[dataKey] = {
+            ...(nd[dataKey]||{}),
+            latest_nav: np.latest_nav,
+            latest_nav_date: np.latest_nav_date || today,
+            dividend_data: dp && dp.length > 0 ? dp : (nd[dataKey]?.dividend_data || []),
+          };
           ok++;
-        }else{fail++;}
-      }catch(e){fail++;}
+        } else { fail++; }
+      }catch(e){ fail++; }
       await new Promise(r=>setTimeout(r,100));
     }
     setFundData(nd);setProgress({cur:0,total:0});setRefreshing(false);
