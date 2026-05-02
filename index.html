@@ -152,11 +152,11 @@ async function fetchViaProxy(code, type) {
 
 function parseNav(json) {
   try {
-    // Vercel API 直接回傳 latest_nav 與 latest_nav_date
+    // Vercel MoneyDJ API 格式
     if (json?.ok && json?.latest_nav != null) {
       return { latest_nav: json.latest_nav, latest_nav_date: json.latest_nav_date || '' };
     }
-    // 舊版鉅亨格式相容
+    // 舊版鉅亨格式
     const items = json?.data?.items;
     if (Array.isArray(items) && items.length > 0) {
       const first = items[0];
@@ -186,9 +186,23 @@ function parseDiv(json) {
   return null;
 }
 
+// 有 MoneyDJ 代碼的安達代碼清單（無代碼者跳過更新）
+const CODES_WITH_MONEYDJ = new Set([
+  'BGUAL040','BSUAL044','BGUAL001','BSUAL001',
+  'BGUAB007','BSUAB008','ECUAB056','EQUAB057',
+  'BGUPC041','BGUSC032','ECUML002','EQUML034',
+  'ECUML003','BGUPC029','BSUPC044','BCUPI011',
+  'BNUP1017','BGUJF059','BSUJF060','BGZAL001',
+  'BSZAL002','ECZML031','EQZML030','BGZSC031',
+  'BCZPI014','BCZPI005','BNZPI016','BGZAB026',
+  'BGAAL041','BSAAL045','ECAML002',
+]);
+
 function getUniqueFunds() {
   const seen=new Set(), res=[];
   FUND_CONFIG.forEach(f=>{
+    // 跳過沒有 MoneyDJ 代碼的基金（如 M&G南非幣）
+    if(!CODES_WITH_MONEYDJ.has(f.code)) return;
     const dk=FUND_NAME_MAPPING[f.name]||f.name;
     if(!seen.has(dk)){seen.add(dk);res.push({code:f.code,dataKey:dk});}
   });
