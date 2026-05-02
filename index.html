@@ -479,6 +479,43 @@ function App(){
           </div>
         </div>
       </div>
+      {/* 成本差異分析 */}
+      <div className="card">
+        <div className="card-header amber"><h2>保險成本差異分析</h2></div>
+        <div className="card-body">
+          <div className="grid-2">
+            {[{label:'新天生贏家',data:coi.nw,rl:'0.165%',color:'blue'},{label:'富貴大贏家',data:coi.rw,rl:'0.2%',color:'emerald'}].map(({label,data,rl,color})=>(
+              <div key={label} className={`coi-card ${color}`}>
+                <h3>{label}</h3>
+                <div className="coi-row"><span className="coi-row-label">管理費 1</span><span className="coi-row-value">NT${data.mgmt_fee1.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">管理費 2 ({rl})</span><span className="coi-row-value">NT${data.mgmt_fee2.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">管理費合計</span><span className="coi-row-value">NT${data.mgmt_fee_total.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">K 值倍數</span><span className="coi-row-value">{data.k_value.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">月 COI</span><span className="coi-row-value">NT${data.monthly_coi.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">危險成本 (月COI×1.1)</span><span className="coi-row-value">NT${data.risk_cost.toFixed(2)}</span></div>
+                <div className={`coi-total ${color}`}>
+                  <span className="coi-total-label">每月費用合計</span>
+                  <span className="coi-total-value">NT${data.monthly_fee_total.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="diff-section">
+            <h4>📊 成本差異分析（新天生贏家 vs 富貴大贏家）</h4>
+            {[
+              {label:'管理費差異',val:coi.rw.mgmt_fee_total-coi.nw.mgmt_fee_total,pos:'新天生贏家較便宜',neg:'富貴大贏家較便宜'},
+              {label:'危險成本差異',val:coi.nw.risk_cost-coi.rw.risk_cost,pos:'富貴大贏家較便宜',neg:'新天生贏家較便宜'},
+              {label:'每月費用差異',val:coi.rw.monthly_fee_total-coi.nw.monthly_fee_total,pos:'新天生贏家較便宜',neg:'富貴大贏家較便宜'},
+            ].map(({label,val,pos,neg})=>(
+              <div className="diff-row" key={label}>
+                <span className="diff-row-label">{label}</span>
+                <span className={`diff-row-value ${val>0?'cheaper':'pricier'}`}>NT${Math.abs(val).toFixed(2)}（{val>0?pos:neg}）</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* COI 危險成本比較表 */}
       <div className="card">
         <div className="card-header amber"><h2>保險危險成本比較（新天生贏家 vs 富貴大贏家）</h2></div>
