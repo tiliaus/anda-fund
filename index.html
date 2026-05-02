@@ -152,6 +152,11 @@ async function fetchViaProxy(code, type) {
 
 function parseNav(json) {
   try {
+    // Vercel API 直接回傳 latest_nav 與 latest_nav_date
+    if (json?.ok && json?.latest_nav != null) {
+      return { latest_nav: json.latest_nav, latest_nav_date: json.latest_nav_date || '' };
+    }
+    // 舊版鉅亨格式相容
     const items = json?.data?.items;
     if (Array.isArray(items) && items.length > 0) {
       const first = items[0];
@@ -159,20 +164,17 @@ function parseNav(json) {
       const ds = typeof dr==='number' ? new Date(dr*1000).toISOString().split('T')[0] : (dr||'');
       return { latest_nav: first.nav || first.price || 0, latest_nav_date: ds };
     }
-    const rows = json?.items?.data || json?.data;
-    if (Array.isArray(rows) && rows.length > 0) {
-      const r = rows[0];
-      const nav = Array.isArray(r) ? r[1] : (r.nav||r.price||0);
-      const dr = Array.isArray(r) ? r[0] : (r.date||0);
-      const ds = typeof dr==='number' ? new Date(dr*1000).toISOString().split('T')[0] : (dr||'');
-      return { latest_nav: nav, latest_nav_date: ds };
-    }
   } catch(e){}
   return null;
 }
 
 function parseDiv(json) {
   try {
+    // Vercel API 直接回傳 dividend_data 陣列
+    if (json?.ok && Array.isArray(json?.dividend_data)) {
+      return json.dividend_data.filter(d => d.amount > 0);
+    }
+    // 舊版格式相容
     const items = json?.data?.items || json?.items || json?.data || [];
     if (!Array.isArray(items)||!items.length) return null;
     return items.slice(0,3).map(d => ({
