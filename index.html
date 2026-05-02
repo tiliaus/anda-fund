@@ -156,7 +156,7 @@ function parseNav(json) {
     if (json?.ok && json?.latest_nav != null) {
       return { latest_nav: json.latest_nav, latest_nav_date: json.latest_nav_date || '' };
     }
-    // 舊版鉅亨格式
+    // 舊版格式相容
     const items = json?.data?.items;
     if (Array.isArray(items) && items.length > 0) {
       const first = items[0];
@@ -263,7 +263,7 @@ function App(){
       setIsLive(true);setDataDate(`${today}（即時更新）`);
       showToast(fail===0?`✅ 全部 ${ok} 支基金更新成功！`:`⚠️ ${ok} 支成功，${fail} 支使用備份資料`,fail===0?'success':'warning');
     }else{
-      showToast('❌ 伺服器代理無法連線到鉅亨網，顯示內建備份資料','error');
+      showToast('❌ MoneyDJ 無法連線，目前顯示內建備份資料','error');
     }
   },[fundData]);
 
