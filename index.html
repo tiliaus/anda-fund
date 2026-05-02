@@ -245,19 +245,20 @@ function App(){
       const{code,dataKey}=list[i];
       setProgress({cur:i+1,total:list.length});
       try{
-        // 只抓淨值（MoneyDJ 配息資料為動態載入，無法靜態抓取）
-        let navJson = null;
+        // 淨值和配息分開呼叫，互不影響
+        let navJson = null, divJson = null;
         try{ navJson = await fetchViaProxy(code,'nav'); }catch(e){}
+        try{ divJson = await fetchViaProxy(code,'div'); }catch(e){}
 
         const np = parseNav(navJson);
+        const dp = parseDiv(divJson);
 
         if(np && np.latest_nav > 0){
           nd[dataKey] = {
             ...(nd[dataKey]||{}),
             latest_nav: np.latest_nav,
             latest_nav_date: np.latest_nav_date || today,
-            // 配息資料保留原始備份，不覆蓋（MoneyDJ 動態載入無法抓取）
-            dividend_data: nd[dataKey]?.dividend_data || [],
+            dividend_data: dp && dp.length > 0 ? dp : (nd[dataKey]?.dividend_data || []),
           };
           ok++;
         } else { fail++; }
@@ -267,7 +268,7 @@ function App(){
     setFundData(nd);setProgress({cur:0,total:0});setRefreshing(false);
     if(ok>0){
       setIsLive(true);setDataDate(`${today}（即時更新）`);
-      showToast(fail===0?`✅ 淨值已全部更新（${ok} 支）！配息資料為內建備份`:`⚠️ ${ok} 支淨值更新成功，${fail} 支使用備份`,fail===0?'success':'warning');
+      showToast(fail===0?`✅ 全部 ${ok} 支基金更新成功！`:`⚠️ ${ok} 支成功，${fail} 支使用備份資料`,fail===0?'success':'warning');
     }else{
       showToast('❌ MoneyDJ 無法連線，目前顯示內建備份資料','error');
     }
