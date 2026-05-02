@@ -28,6 +28,29 @@
   .grid-6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
   @media(max-width:768px){.grid-3,.grid-6{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
   @media(max-width:480px){.grid-3,.grid-6{grid-template-columns:1fr}}
+
+  /* 行動裝置表格優化 */
+  @media(max-width:768px){
+    table{font-size:.72rem}
+    /* 標的名稱欄加寬 */
+    td.col-name,th.col-name{min-width:130px;max-width:160px;white-space:normal;word-break:break-all}
+    /* 其他欄位縮小 */
+    td.col-cur,th.col-cur{min-width:32px;padding:5px 4px;font-size:.68rem}
+    td.col-agent,th.col-agent{min-width:36px;padding:5px 4px;font-size:.68rem}
+    td.col-risk,th.col-risk{min-width:36px;padding:5px 4px}
+    td.col-dtype,th.col-dtype{min-width:32px;padding:5px 4px;font-size:.68rem}
+    td.col-code,th.col-code{min-width:60px;padding:5px 4px;font-size:.64rem}
+    td.col-alloc,th.col-alloc{min-width:48px;padding:5px 4px}
+    td.col-monthly,th.col-monthly{min-width:44px;padding:5px 4px}
+    td.col-date,th.col-date{min-width:52px;padding:5px 4px;font-size:.68rem}
+    td.col-krate,th.col-krate{min-width:44px;padding:5px 4px}
+    td.col-amt,th.col-amt{min-width:44px;padding:5px 4px}
+    td.col-nav,th.col-nav{min-width:52px;padding:5px 4px}
+    td.col-nrate,th.col-nrate{min-width:44px;padding:5px 4px}
+    /* 佔比輸入框縮小 */
+    .alloc-input{width:42px;padding:3px 4px;font-size:.72rem}
+    th{white-space:normal;word-break:keep-all;line-height:1.3;padding:6px 4px}
+  }
   .form-group{display:flex;flex-direction:column;gap:6px}
   .form-group label{font-size:.8rem;font-weight:600;color:#475569}
   .form-group input,.form-group select{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;font-family:inherit;color:#1e293b;background:#fff;outline:none;transition:border-color .2s}
@@ -412,13 +435,20 @@ function App(){
               <div className="card-body"><div className="overflow-x">
                 <table>
                   <thead><tr>
-                    <th>幣別</th><th>總代理</th><th>標的名稱</th><th>風險</th>
-                    <th>配息方式</th><th>代碼</th>
-                    <th className="center">佔比H(%)</th><th className="right">月配息I</th>
-                    <th>基準日J</th><th className="right">配息率K(%)</th>
-                    <th className="right">配息金額L</th><th className="right">最近淨值M</th>
-                    <th className="right">最近配息率N(%)</th>
-                  </tr></thead>
+                      <th className="col-cur">幣別</th>
+                      <th className="col-agent">總代理</th>
+                      <th className="col-name">標的名稱</th>
+                      <th className="col-risk">風險</th>
+                      <th className="col-dtype">配息<br/>方式</th>
+                      <th className="col-code">代碼</th>
+                      <th className="center col-alloc">佔比<br/>H(%)</th>
+                      <th className="right col-monthly">月配<br/>息I</th>
+                      <th className="col-date">基準<br/>日J</th>
+                      <th className="right col-krate">配息率<br/>K(%)</th>
+                      <th className="right col-amt">配息<br/>金額L</th>
+                      <th className="right col-nav">最近<br/>淨值M</th>
+                      <th className="right col-nrate">配息率<br/>N(%)</th>
+                    </tr></thead>
                   <tbody>
                     {groups.map((group,gi)=>{
                       const base=group[0],info=getFundInfo(base.name,fundData);
@@ -432,8 +462,8 @@ function App(){
                             ...(ci===0 && gi>0 ? {borderTop:'2px solid #94a3b8'} : ci===0 ? {borderTop:'1px solid #e2e8f0'} : {borderTop:'1px dashed #f1f5f9'}),
                             ...(ci===group.length-1 ? {borderBottom:'1px solid #e2e8f0'} : {}),
                           }}>
-                            {ci===0&&<td rowSpan={group.length}>{cur}</td>}
-                            {ci===0&&<td rowSpan={group.length}>{base.agent}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='col-cur'>{cur}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='col-agent'>{base.agent}</td>}
                             {ci===0&&<td rowSpan={group.length} style={{maxWidth:'200px',whiteSpace:'normal',lineHeight:1.5,fontSize:'.85rem'}}>
                               {MONEYDJ_URL[base.code]
                                 ? <a href={MONEYDJ_URL[base.code]} target="_blank" rel="noopener noreferrer"
@@ -444,16 +474,16 @@ function App(){
                                   </a>
                                 : base.name}
                             </td>}
-                            {ci===0&&<td rowSpan={group.length}><span className={`risk-badge ${base.risk_level}`}>{base.risk_level}</span></td>}
-                            <td><span className={cfg.dividend_type==='dividend'?'type-div':'type-rein'}>{cfg.dividend_type==='dividend'?'配息':'配股'}</span></td>
-                            <td className="code-cell">{cfg.code}</td>
-                            <td className="center"><input className="alloc-input" type="number" value={a} min="0" max="100" onChange={e=>handleAlloc(cfg.code,cfg.dividend_type,e.target.value)}/></td>
-                            <td className="right">{a>0?m.toFixed(4):'-'}</td>
-                            {ci===0&&<td rowSpan={group.length}>{bDate}</td>}
-                            {ci===0&&<td rowSpan={group.length} className="right">{kRate}</td>}
-                            {ci===0&&<td rowSpan={group.length} className="right">{amt>0?amt.toFixed(4):'-'}</td>}
-                            {ci===0&&<td rowSpan={group.length} className="right">{nav>0?nav.toFixed(4):'-'}</td>}
-                            {ci===0&&<td rowSpan={group.length} className="right">{nRate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='col-risk'><span className={`risk-badge ${base.risk_level}`}>{base.risk_level}</span></td>}
+                            <td className='col-dtype'><span className={cfg.dividend_type==='dividend'?'type-div':'type-rein'}>{cfg.dividend_type==='dividend'?'配息':'配股'}</span></td>
+                            <td className="code-cell col-code">{cfg.code}</td>
+                            <td className="center col-alloc"><input className="alloc-input" type="number" value={a} min="0" max="100" onChange={e=>handleAlloc(cfg.code,cfg.dividend_type,e.target.value)}/></td>
+                            <td className="right col-monthly">{a>0?m.toFixed(4):'-'}</td>
+                            {ci===0&&<td rowSpan={group.length} className='col-date'>{bDate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='right col-krate'>{kRate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='right col-amt'>{amt>0?amt.toFixed(4):'-'}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='right col-nav'>{nav>0?nav.toFixed(4):'-'}</td>}
+                            {ci===0&&<td rowSpan={group.length} className='right col-nrate'>{nRate}</td>}
                           </tr>
                         );
                       });
@@ -565,7 +595,7 @@ function App(){
                       const diff100=rw100.monthly_fee_total-nw100.monthly_fee_total;
                       rows.push(
                         <tr key={100}>
-                          <td className="center">100歲</td>
+                          <td className="center col-alloc">100歲</td>
                           <td className="right" style={{color:'#1d4ed8',fontWeight:'600'}}>NT${nw100.risk_cost.toFixed(0)}</td>
                           <td className="right" style={{color:'#15803d',fontWeight:'600'}}>NT${rw100.risk_cost.toFixed(0)}</td>
                           <td className="right" style={{color:(rw100.risk_cost-nw100.risk_cost)>0?'#b91c1c':'#15803d'}}>
