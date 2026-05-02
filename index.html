@@ -391,8 +391,11 @@ function App(){
                         const k=`${cfg.code}|${cfg.dividend_type}`,a=allocs[k]||0;
                         const m=nav>0?(inv*10000*a/100)/nav*amt:0;
                         return(
-                          <tr key={cfg.code}>
-                            {ci===0&&<td rowSpan={group.length}>{cur}</td>}
+                          <tr key={cfg.code} style={{
+                            ...(ci===0 ? {borderTop:'1.5px solid #cbd5e1'} : {borderTop:'1px dashed #e2e8f0'}),
+                            ...(ci===group.length-1 ? {borderBottom:'1.5px solid #cbd5e1'} : {}),
+                          }}>
+                            {ci===0&&<td rowSpan={group.length} style={{borderLeft:'1.5px solid #cbd5e1'}}>{cur}</td>}
                             {ci===0&&<td rowSpan={group.length}>{base.agent}</td>}
                             {ci===0&&<td rowSpan={group.length} style={{maxWidth:'180px',whiteSpace:'normal',lineHeight:1.4,fontSize:'.75rem'}}>{base.name}</td>}
                             {ci===0&&<td rowSpan={group.length}><span className={`risk-badge ${base.risk_level}`}>{base.risk_level}</span></td>}
@@ -404,7 +407,7 @@ function App(){
                             {ci===0&&<td rowSpan={group.length} className="right">{kRate}</td>}
                             {ci===0&&<td rowSpan={group.length} className="right">{amt>0?amt.toFixed(4):'-'}</td>}
                             {ci===0&&<td rowSpan={group.length} className="right">{nav>0?nav.toFixed(4):'-'}</td>}
-                            {ci===0&&<td rowSpan={group.length} className="right">{nRate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className="right" style={{borderRight:'1.5px solid #cbd5e1'}}>{nRate}</td>}
                           </tr>
                         );
                       });
