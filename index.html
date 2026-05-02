@@ -99,17 +99,17 @@
 const { useState, useMemo, useEffect, useCallback } = React;
 
 // ===== 靜態備份資料 =====
-const STATIC_FUND_DATA = {"全球智慧數據股票入息基金A8澳幣":{"latest_nav":8.54,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.056,"currency":"澳幣"}]},"收益成長基金-AMg7月收總收益類股(澳幣)":{"latest_nav":7.8648,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.06085,"currency":"澳幣"}]},"鋒裕匯理基金策略收益債劵(南非幣A穩定月配)":{"latest_nav":341.03,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":4.5196,"currency":"南非幣"}]},"收益成長基金-AM穩定月收類股(南非幣避險)_x0009_":{"latest_nav":103.59,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.962,"currency":"南非幣"}]},"M＆G新興市場債券基金A(南非幣避險月配)F1":{"latest_nav":93.0645,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-20","amount":1.6486,"currency":"南非幣"}]},"環球收益成長A月配固定(C)":{"latest_nav":1896.515,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-25","amount":19.924355,"currency":"南非幣"}]},"多重收益優化組合基金B配息":{"latest_nav":7.89,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-31","amount":0.07,"currency":"美元"}]},"環球收益成長A月配固定":{"latest_nav":132.2168,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-25","amount":1.117839,"currency":"美元"}]},"美國成長基金AP(總報酬月配)":{"latest_nav":67.39,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.8322,"currency":"美元"}]},"全球多元收益基金AD":{"latest_nav":56.33,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.5097,"currency":"美元"}]},"美元綜合債券A2(穩定月配)":{"latest_nav":527.3,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":5.714,"currency":"南非幣"}]},"M&G入息基金A-美元避險月配F":{"latest_nav":76.3458,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-20","amount":0.654,"currency":"美元"}]},"全球智慧數據股票入息基金A6美元":{"latest_nav":9.15,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.0635,"currency":"美元"}]},"鋒裕匯理基金策略收益債劵(美元A穩定月配)_x0009_":{"latest_nav":28.11,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":0.2392,"currency":"美元"}]},"多重收益基金JPM多重收益(美元對沖)-A股_x0009_":{"latest_nav":73.2,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-09","amount":0.68,"currency":"美元"}]},"全球智慧數據股票入息基金A8":{"latest_nav":107.35,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.885,"currency":"南非幣"}]},"世界科技基金A10":{"latest_nav":15.44,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.144,"currency":"美元"}]},"多元資產收益組合-A|類型(美元)":{"latest_nav":8.99,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.075,"currency":"美元"}]},"安聯AM-美":{"latest_nav":8.1561,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.055,"currency":"美元"}]},"安聯AMG7-美":{"latest_nav":8.3595,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.06822,"currency":"美元"}]}};
+const STATIC_FUND_DATA = {"全球智慧數據股票入息基金A8澳幣":{"latest_nav":8.54,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.056,"currency":"澳幣"}]},"收益成長基金-AMg7月收總收益類股(澳幣)":{"latest_nav":7.8648,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.06085,"currency":"澳幣"}]},"鋒裕匯理基金策略收益債劵(南非幣A穩定月配)":{"latest_nav":341.03,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":4.5196,"currency":"南非幣"}]},"收益成長基金-AM穩定月收類股(南非幣避險)_x0009_":{"latest_nav":103.59,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.962,"currency":"南非幣"}]},"M＆G新興市場債券基金A(南非幣避險月配)F1":{"latest_nav":93.0645,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-20","amount":1.6486,"currency":"南非幣"}]},"環球收益成長A月配固定(C)":{"latest_nav":1896.515,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-25","amount":19.924355,"currency":"南非幣"}]},"多重收益優化組合基金B配息":{"latest_nav":7.89,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-31","amount":0.07,"currency":"美元"}]},"環球收益成長A月配固定":{"latest_nav":132.2168,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-25","amount":1.117839,"currency":"美元"}]},"美國成長基金AP(總報酬月配)":{"latest_nav":67.39,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.8322,"currency":"美元"}]},"全球多元收益基金AD":{"latest_nav":56.33,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.5097,"currency":"美元"}]},"美元綜合債券A2(穩定月配)":{"latest_nav":527.3,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":5.714,"currency":"南非幣"}]},"M&G入息基金A-美元避險月配F":{"latest_nav":76.3458,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-20","amount":0.654,"currency":"美元"}]},"全球智慧數據股票入息基金A6美元":{"latest_nav":9.15,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.0635,"currency":"美元"}]},"鋒裕匯理基金策略收益債劵(美元A穩定月配)_x0009_":{"latest_nav":28.11,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":0.2392,"currency":"美元"}]},"多重收益基金JPM多重收益(美元對沖)-A股_x0009_":{"latest_nav":73.2,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-09","amount":0.68,"currency":"美元"}]},"全球智慧數據股票入息基金A8":{"latest_nav":107.35,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.885,"currency":"南非幣"}]},"世界科技基金A10":{"latest_nav":15.44,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.144,"currency":"美元"}]},"多元資產收益組合-AI類型(美元)":{"latest_nav":8.99,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.075,"currency":"美元"}]},"安聯AM-美":{"latest_nav":8.1561,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.055,"currency":"美元"}]},"安聯AMG7-美":{"latest_nav":8.3595,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.06822,"currency":"美元"}]}};
 
-const FUND_NAME_MAPPING = {"收益成長基金-AMg7月收總收益類股(美元)":"安聯AMG7-美","收益成長基金-AM穩定月收類股(美元)":"安聯AM-美","多元資產收益組合-A|類型(美元)":"多元資產收益組合-A|類型(美元)","美國成長基金AP(總報酬月配)":"美國成長基金AP(總報酬月配)","M&G入息基金A-美元避險月配F":"M&G入息基金A-美元避險月配F","環球收益成長A月配固定":"環球收益成長A月配固定","全球智慧數據股票入息基金A6美元":"全球智慧數據股票入息基金A6美元","世界科技基金A10(總報酬穩定配息)":"世界科技基金A10","多重收益優化組合基金B配息":"多重收益優化組合基金B配息","鋒裕匯理基金策略收益債劵(美元A穩定月配)":"鋒裕匯理基金策略收益債劵(美元A穩定月配)_x0009_","多重收益基金JPM多重收益(美元對沖)-A股":"多重收益基金JPM多重收益(美元對沖)-A股_x0009_","收益成長基金-AM穩定月收類股(南非幣避險)":"收益成長基金-AM穩定月收類股(南非幣避險)_x0009_","全球智慧數據股票入息基金A8多幣別穩定月配-南非":"全球智慧數據股票入息基金A8","環球收益成長A月配固定(C)":"環球收益成長A月配固定(C)","美元綜合債券A2(穩定月配)-南非幣":"美元綜合債券A2(穩定月配)","東方匯理基金策略收益債券A南非幣避險(穩定月配息)":"鋒裕匯理基金策略收益債劵(南非幣A穩定月配)","M＆G新興市場債券基金A(南非幣避險月配)F1":"M＆G新興市場債券基金A(南非幣避險月配)F1","全球多元收益基金AD-南非幣":"全球多元收益基金AD","收益成長基金-AMg7月收總收益類股(澳幣)":"收益成長基金-AMg7月收總收益類股(澳幣)","全球智慧數據股票入息基金A8澳幣":"全球智慧數據股票入息基金A8澳幣"};
+const FUND_NAME_MAPPING = {"收益成長基金-AMg7月收總收益類股(美元)":"安聯AMG7-美","收益成長基金-AM穩定月收類股(美元)":"安聯AM-美","多元資產收益組合-AI類型(美元)":"多元資產收益組合-AI類型(美元)","美國成長基金AP(總報酬月配)":"美國成長基金AP(總報酬月配)","M&G入息基金A-美元避險月配F":"M&G入息基金A-美元避險月配F","環球收益成長A月配固定":"環球收益成長A月配固定","全球智慧數據股票入息基金A6美元":"全球智慧數據股票入息基金A6美元","世界科技基金A10(總報酬穩定配息)":"世界科技基金A10","多重收益優化組合基金B配息":"多重收益優化組合基金B配息","鋒裕匯理基金策略收益債劵(美元A穩定月配)":"鋒裕匯理基金策略收益債劵(美元A穩定月配)_x0009_","多重收益基金JPM多重收益(美元對沖)-A股":"多重收益基金JPM多重收益(美元對沖)-A股_x0009_","收益成長基金-AM穩定月收類股(南非幣避險)":"收益成長基金-AM穩定月收類股(南非幣避險)_x0009_","全球智慧數據股票入息基金A8多幣別穩定月配-南非":"全球智慧數據股票入息基金A8","環球收益成長A月配固定(C)":"環球收益成長A月配固定(C)","美元綜合債券A2(穩定月配)-南非幣":"美元綜合債券A2(穩定月配)","東方匯理基金策略收益債券A南非幣避險(穩定月配息)":"鋒裕匯理基金策略收益債劵(南非幣A穩定月配)","M＆G新興市場債券基金A(南非幣避險月配)F1":"M＆G新興市場債券基金A(南非幣避險月配)F1","全球多元收益基金AD-南非幣":"全球多元收益基金AD","收益成長基金-AMg7月收總收益類股(澳幣)":"收益成長基金-AMg7月收總收益類股(澳幣)","全球智慧數據股票入息基金A8澳幣":"全球智慧數據股票入息基金A8澳幣"};
 
 const FUND_CONFIG = [
   {currency:'USD',agent:'安聯',name:'收益成長基金-AMg7月收總收益類股(美元)',risk_level:'RR3',code:'BSUAL044',dividend_type:'reinvestment'},
   {currency:'USD',agent:'安聯',name:'收益成長基金-AMg7月收總收益類股(美元)',risk_level:'RR3',code:'BGUAL040',dividend_type:'dividend'},
   {currency:'USD',agent:'安聯',name:'收益成長基金-AM穩定月收類股(美元)',risk_level:'RR3',code:'BSUAL001',dividend_type:'reinvestment'},
   {currency:'USD',agent:'安聯',name:'收益成長基金-AM穩定月收類股(美元)',risk_level:'RR3',code:'BGUAL001',dividend_type:'dividend'},
-  {currency:'USD',agent:'聯博',name:'多元資產收益組合-A|類型(美元)',risk_level:'RR2',code:'BSUAB008',dividend_type:'reinvestment'},
-  {currency:'USD',agent:'聯博',name:'多元資產收益組合-A|類型(美元)',risk_level:'RR2',code:'BGUAB007',dividend_type:'dividend'},
+  {currency:'USD',agent:'聯博',name:'多元資產收益組合-AI類型(美元)',risk_level:'RR2',code:'BSUAB008',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'聯博',name:'多元資產收益組合-AI類型(美元)',risk_level:'RR2',code:'BGUAB007',dividend_type:'dividend'},
   {currency:'USD',agent:'聯博',name:'美國成長基金AP(總報酬月配)',risk_level:'RR3',code:'EQUAB057',dividend_type:'reinvestment'},
   {currency:'USD',agent:'聯博',name:'美國成長基金AP(總報酬月配)',risk_level:'RR3',code:'ECUAB056',dividend_type:'dividend'},
   {currency:'USD',agent:'富盛',name:'M&G入息基金A-美元避險月配F',risk_level:'RR2',code:'BGUPC041',dividend_type:'dividend'},
@@ -417,39 +417,63 @@ function App(){
           </div>
         </div>
       </div>
-
+      {/* COI 危險成本比較表 */}
       <div className="card">
-        <div className="card-header amber"><h2>保險成本比較</h2></div>
+        <div className="card-header amber"><h2>保險危險成本比較（新天生贏家 vs 富貴大贏家）</h2></div>
         <div className="card-body">
-          <div className="grid-2">
-            {[{label:'新天生贏家',data:coi.nw,rl:'0.165%',color:'blue'},{label:'富貴大贏家',data:coi.rw,rl:'0.2%',color:'emerald'}].map(({label,data,rl,color})=>(
-              <div key={label} className={`coi-card ${color}`}>
-                <h3>{label}</h3>
-                <div className="coi-row"><span className="coi-row-label">管理費 1</span><span className="coi-row-value">NT${data.mgmt_fee1.toFixed(2)}</span></div>
-                <div className="coi-row"><span className="coi-row-label">管理費 2 ({rl})</span><span className="coi-row-value">NT${data.mgmt_fee2.toFixed(2)}</span></div>
-                <div className="coi-row"><span className="coi-row-label">管理費合計</span><span className="coi-row-value">NT${data.mgmt_fee_total.toFixed(2)}</span></div>
-                <div className="coi-row"><span className="coi-row-label">K 值倍數</span><span className="coi-row-value">{data.k_value.toFixed(2)}</span></div>
-                <div className="coi-row"><span className="coi-row-label">月 COI</span><span className="coi-row-value">NT${data.monthly_coi.toFixed(2)}</span></div>
-                <div className="coi-row"><span className="coi-row-label">危險成本 (月COI×1.1)</span><span className="coi-row-value">NT${data.risk_cost.toFixed(2)}</span></div>
-                <div className={`coi-total ${color}`}>
-                  <span className="coi-total-label">每月費用合計</span>
-                  <span className="coi-total-value">NT${data.monthly_fee_total.toFixed(2)}</span>
-                </div>
-              </div>
-            ))}
+          <div style={{overflowX:'auto'}}>
+            <table>
+              <thead>
+                <tr>
+                  <th className="center">年齡</th>
+                  <th className="right">新天生贏家<br/><span style={{fontSize:'.7rem',fontWeight:'normal'}}>危險成本</span></th>
+                  <th className="right">富貴大贏家<br/><span style={{fontSize:'.7rem',fontWeight:'normal'}}>危險成本</span></th>
+                  <th className="right" style={{color:'#b45309'}}>差異<br/><span style={{fontSize:'.7rem',fontWeight:'normal'}}>(富貴-新天)</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(()=>{
+                  const rows=[];
+                  const startAge=age;
+                  for(let a=startAge; a<=100; a+=5){
+                    const nw=calcCOI(inv,a,gender,COI_DATA.COI,0.00165);
+                    const rw=calcCOI(inv,a,gender,COI_DATA['COI-富貴'],0.002);
+
+                    const isCurrentAge=a===startAge;
+                    rows.push(
+                      <tr key={a} style={isCurrentAge?{background:'#eff6ff',fontWeight:'600'}:{}}>
+                        <td className="center" style={isCurrentAge?{color:'#1d4ed8'}:{}}>{a}歲{isCurrentAge?' ◀':''}</td>
+                        <td className="right" style={{color:'#1d4ed8',fontWeight:'600'}}>NT${nw.risk_cost.toFixed(0)}</td>
+                        <td className="right" style={{color:'#15803d',fontWeight:'600'}}>NT${rw.risk_cost.toFixed(0)}</td>
+                        <td className="right" style={{color:(rw.risk_cost-nw.risk_cost)>0?'#b91c1c':'#15803d'}}>
+                          {(rw.risk_cost-nw.risk_cost)>0?'+':''}{(rw.risk_cost-nw.risk_cost).toFixed(0)}
+                        </td>
+                      </tr>
+                    );
+                    if(a+5>100 && a<100){
+                      // 補 100 歲
+                      const nw100=calcCOI(inv,100,gender,COI_DATA.COI,0.00165);
+                      const rw100=calcCOI(inv,100,gender,COI_DATA['COI-富貴'],0.002);
+                      const diff100=rw100.monthly_fee_total-nw100.monthly_fee_total;
+                      rows.push(
+                        <tr key={100}>
+                          <td className="center">100歲</td>
+                          <td className="right" style={{color:'#1d4ed8',fontWeight:'600'}}>NT${nw100.risk_cost.toFixed(0)}</td>
+                          <td className="right" style={{color:'#15803d',fontWeight:'600'}}>NT${rw100.risk_cost.toFixed(0)}</td>
+                          <td className="right" style={{color:(rw100.risk_cost-nw100.risk_cost)>0?'#b91c1c':'#15803d'}}>
+                            {(rw100.risk_cost-nw100.risk_cost)>0?'+':''}{(rw100.risk_cost-nw100.risk_cost).toFixed(0)}
+                          </td>
+                        </tr>
+                      );
+                    }
+                  }
+                  return rows;
+                })()}
+              </tbody>
+            </table>
           </div>
-          <div className="diff-section">
-            <h4>📊 成本差異分析</h4>
-            {[
-              {label:'管理費差異',val:coi.rw.mgmt_fee_total-coi.nw.mgmt_fee_total,pos:'新天生贏家較便宜',neg:'富貴大贏家較便宜'},
-              {label:'危險成本差異',val:coi.nw.risk_cost-coi.rw.risk_cost,pos:'富貴大贏家較便宜',neg:'新天生贏家較便宜'},
-              {label:'每月費用差異',val:coi.rw.monthly_fee_total-coi.nw.monthly_fee_total,pos:'新天生贏家較便宜',neg:'富貴大贏家較便宜'},
-            ].map(({label,val,pos,neg})=>(
-              <div className="diff-row" key={label}>
-                <span className="diff-row-label">{label}</span>
-                <span className={`diff-row-value ${val>0?'cheaper':'pricier'}`}>NT${Math.abs(val).toFixed(2)}（{val>0?pos:neg}）</span>
-              </div>
-            ))}
+          <div style={{marginTop:'10px',fontSize:'.75rem',color:'#94a3b8'}}>
+            ◀ 目前輸入年齡｜每隔 5 歲顯示一列｜差異為正數表示富貴大贏家較貴
           </div>
         </div>
       </div>
