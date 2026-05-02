@@ -47,96 +47,85 @@ const CODE_MAP = {
 function parseNav(html) {
   let nav = null, date = null;
 
-  // ── 淨值解析（由精確到寬鬆） ──
+  // MoneyDJ 使用 class="t3n2" 或 class="t3n1" 存放淨值
   const navPatterns = [
-    // id 包含 nav（最精確）
-    /id=["']?[^"'\s>]*nav[^"'\s>]*["']?\s*[^>]*>\s*([0-9]{1,6}(?:,[0-9]{3})*\.[0-9]{2,6})/i,
-    // class 包含 nav 或 price
-    /class=["'][^"']*(?:nav|price|value|unit)[^"']*["'][^>]*>\s*([0-9]{1,6}(?:,[0-9]{3})*\.[0-9]{2,6})/i,
-    // JavaScript 資料物件
-    /['"](nav|price|unitNav|closePrice|lastPrice)['"]\s*:\s*['"]?([0-9]+\.[0-9]+)/i,
-    // td 中的純淨值數字
-    /<td[^>]*>\s*([0-9]{1,4}\.[0-9]{2,6})\s*<\/td>/g,
-    // span 中的數字
-    /<span[^>]*>\s*([0-9]{1,4}\.[0-9]{2,6})\s*<\/span>/g,
+    /<td[^>]*class="t3n[12]"[^>]*>\s*([\d,]+\.[\d]{2,6})\s*<\/td>/gi,
+    /<td[^>]*>\s*([1-9][\d]{0,4}\.[\d]{2,6})\s*<\/td>/gi,
+    /<span[^>]*>\s*([1-9][\d]{0,4}\.[\d]{2,6})\s*<\/span>/gi,
   ];
 
   for (const p of navPatterns) {
-    if (p.global) {
-      const matches = [...html.matchAll(p)];
-      for (const m of matches) {
-        const v = parseFloat(m[1].replace(/,/g, ''));
-        if (v >= 0.1 && v <= 99999) { nav = v; break; }
-      }
-    } else {
-      const m = html.match(p);
-      if (m) {
-        const idx = m.length === 3 ? 2 : 1;
-        const v = parseFloat((m[idx] || '').replace(/,/g, ''));
-        if (v >= 0.1 && v <= 99999) nav = v;
-      }
+    const matches = [...html.matchAll(p)];
+    for (const m of matches) {
+      const v = parseFloat(m[1].replace(/,/g, ''));
+      if (v >= 0.1 && v <= 50000) { nav = v; break; }
     }
     if (nav) break;
   }
 
-  // ── 日期解析（取最新的日期）──
-  let bestYear = 0;
+  // 取最新日期
+  let bestDate = null;
   const allDates = [...html.matchAll(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/g)];
   for (const m of allDates) {
     const y = parseInt(m[1]);
-    if (y >= 2020 && y > bestYear) {
-      bestYear = y;
-      date = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+    if (y >= 2020) {
+      const candidate = `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+      if (!bestDate || candidate > bestDate) bestDate = candidate;
     }
   }
+  date = bestDate;
 
   return { nav, date };
 }
 
-// 解析配息資料（支援所有 MoneyDJ 頁面格式）
+// 解析配息資料（MoneyDJ XHTML 格式）
 function parseDiv(html) {
   const divs = [];
 
-  // 方法一：找配息相關表格
+  // MoneyDJ 配息表格：class="t3t1" 日期 + class="t3n1"/"t3n2" 金額
+  // 先找有配息/除息相關的表格
   const tables = html.match(/<table[\s\S]*?<\/table>/gi) || [];
+  
   for (const tbl of tables) {
     if (!/配息|除息|dividend|ex.div/i.test(tbl)) continue;
+    
     const rows = tbl.match(/<tr[\s\S]*?<\/tr>/gi) || [];
-    for (const row of rows.slice(1, 7)) {
+    for (const row of rows.slice(1, 8)) {
+      // 取出所有 td 文字
       const cells = (row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || [])
-        .map(c => c.replace(/<[^>]+>/g, '').replace(/&nbsp;|\s+/g, ' ').trim());
-      // 嘗試各種欄位順序
-      for (let i = 0; i < cells.length - 1; i++) {
-        const dateStr = cells[i];
-        const amtStr = cells[i+1] || '0';
-        const amount = parseFloat(amtStr.replace(/,/g, ''));
-        // 日期格式：YYYY/MM/DD 或 YYYY-MM-DD
-        if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(dateStr.trim()) && amount > 0) {
-          divs.push({
-            basis_date: dateStr.trim().replace(/\//g, '-'),
-            amount
-          });
-          break;
+        .map(c => c.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim());
+      
+      // 找日期欄（格式：YYYY/MM/DD）
+      for (let i = 0; i < cells.length; i++) {
+        const dateStr = cells[i].trim();
+        if (/^\d{4}[\/\-]\d{1,2}[\/\-]\d{1,2}$/.test(dateStr)) {
+          // 找下一個數字欄作為配息金額
+          for (let j = i + 1; j < cells.length; j++) {
+            const amount = parseFloat(cells[j].replace(/,/g, ''));
+            if (!isNaN(amount) && amount > 0 && amount < 10000) {
+              divs.push({
+                basis_date: dateStr.replace(/\//g, '-'),
+                amount,
+              });
+              break;
+            }
+          }
+          if (divs.length > 0) break;
         }
       }
     }
     if (divs.length > 0) break;
   }
 
-  // 方法二：從 JavaScript 資料解析
+  // 備用：從整個 HTML 找日期+金額配對
   if (divs.length === 0) {
-    const patterns = [
-      /"exDividendDate"\s*:\s*"([^"]+)"[\s\S]{0,100}"dividend(?:Amount)?"\s*:\s*([0-9.]+)/gi,
-      /"date"\s*:\s*"([^"]+)"[\s\S]{0,100}"amount"\s*:\s*([0-9.]+)/gi,
-      /"recordDate"\s*:\s*"([^"]+)"[\s\S]{0,100}"cash"\s*:\s*([0-9.]+)/gi,
-    ];
-    for (const p of patterns) {
-      const matches = [...html.matchAll(p)];
-      for (const m of matches.slice(0, 3)) {
-        const amount = parseFloat(m[2]);
-        if (amount > 0) divs.push({ basis_date: m[1].replace(/\//g, '-'), amount });
+    const dateAmtPattern = /(\d{4}\/\d{2}\/\d{2})[^\d<]{0,50}([\d]+\.[\d]{4,6})/g;
+    const matches = [...html.matchAll(dateAmtPattern)];
+    for (const m of matches.slice(0, 3)) {
+      const amount = parseFloat(m[2]);
+      if (amount > 0 && amount < 10000) {
+        divs.push({ basis_date: m[1].replace(/\//g, '-'), amount });
       }
-      if (divs.length > 0) break;
     }
   }
 
