@@ -362,7 +362,7 @@ function App(){
                     {groups.map(group=>{
                       const base=group[0],info=getFundInfo(base.name,fundData);
                       const div=info?.dividend_data?.[0],nav=info?.latest_nav||0,amt=div?.amount||0;
-                      const bDate=div?.basis_date||'-',kRate=nav>0&&amt>0?((amt/nav)*12*100).toFixed(2):'-';
+                      const bDate=div?.basis_date||'-',kRate=div?.annual_rate!=null?div.annual_rate.toFixed(2):(nav>0&&amt>0?((amt/nav)*12*100).toFixed(2):'-');
                       return group.map((cfg,ci)=>{
                         const k=`${cfg.code}|${cfg.dividend_type}`,a=allocs[k]||0;
                         const m=nav>0?(inv*10000*a/100)/nav*amt:0;
