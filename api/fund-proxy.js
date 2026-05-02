@@ -108,7 +108,10 @@ function parseDiv(html) {
     const amount = parseFloat(cells[4].replace(/,/g, ''));
     if (isNaN(amount) || amount <= 0) continue;
 
-    divs.push({ basis_date: basisDate, amount });
+    // 第六欄（index 5）為年化配息率%（直接使用 MoneyDJ 計算好的數值）
+    const annual_rate = parseFloat(cells[5].replace(/,/g, '')) || null;
+
+    divs.push({ basis_date: basisDate, amount, annual_rate });
     if (divs.length >= 3) break;
   }
 
