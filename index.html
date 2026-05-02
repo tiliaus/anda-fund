@@ -140,6 +140,43 @@ const FUND_CONFIG = [
 const COI_DATA = {"COI":{"rates":{"15":{"male":0.2867,"female":0.1508},"20":{"male":0.52,"female":0.2108},"25":{"male":0.6842,"female":0.2967},"30":{"male":0.8842,"female":0.3342},"35":{"male":1.2767,"female":0.4658},"40":{"male":1.8783,"female":0.685},"45":{"male":2.8483,"female":1.0258},"50":{"male":4.28,"female":1.66},"55":{"male":5.9908,"female":2.5183},"56":{"male":6.4075,"female":2.7292},"57":{"male":6.9333,"female":2.9992},"58":{"male":7.57,"female":3.335},"59":{"male":8.3667,"female":3.7242},"60":{"male":9.1192,"female":4.1533},"61":{"male":9.7333,"female":4.5675},"62":{"male":10.4933,"female":4.9858},"63":{"male":11.4158,"female":5.4642},"64":{"male":12.4842,"female":6.0158},"65":{"male":13.67,"female":6.6608},"70":{"male":21.2967,"female":11.7342},"75":{"male":32.9017,"female":20.2208},"80":{"male":49.9517,"female":34.69},"85":{"male":75.8775,"female":58.015},"90":{"male":116.0308,"female":97.2775},"95":{"male":180.2433,"female":170.7058},"100":{"male":277.485,"female":292.9408}},"k_table":{"30":1.9,"40":1.6,"50":1.4,"60":1.2,"70":1.1,"90":1.02,"100":1},"mgmt_fee2_rate":0.00165},"COI-富貴":{"rates":{"15":{"male":0.2467,"female":0.1083},"20":{"male":0.36,"female":0.1483},"25":{"male":0.4133,"female":0.2},"30":{"male":0.5475,"female":0.2608},"35":{"male":0.8142,"female":0.3683},"40":{"male":1.2733,"female":0.545},"45":{"male":2.0142,"female":0.8475},"50":{"male":2.885,"female":1.1867},"55":{"male":4.2167,"female":1.7958},"56":{"male":4.5133,"female":1.9208},"57":{"male":4.835,"female":2.0625},"58":{"male":5.185,"female":2.2233},"59":{"male":5.565,"female":2.4058},"60":{"male":6.2175,"female":2.7692},"65":{"male":9.3858,"female":4.6658},"70":{"male":15.4233,"female":8.095},"75":{"male":23.9033,"female":13.6083},"80":{"male":37.6492,"female":23.9892},"85":{"male":58.4625,"female":41.2817},"90":{"male":90.6783,"female":71.9883},"95":{"male":140.0733,"female":124.1433},"100":{"male":214.8742,"female":208.315}},"k_table":{"30":1.9,"40":1.6,"50":1.4,"60":1.2,"70":1.1,"90":1.02,"100":1},"mgmt_fee2_rate":0.002}};
 
 const CURRENCY_ORDER=['USD','ZAR','AUD'];
+
+// MoneyDJ 基金連結對應表（安達代碼 → MoneyDJ URL）
+const MONEYDJ_URL = {
+  // 境外基金：yp011001
+  'BGUAL040':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=TLZF9',
+  'BSUAL044':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=TLZF9',
+  'BGUAL001':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=TLZ64',
+  'BSUAL001':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=TLZ64',
+  'ECUAB056':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=albt8',
+  'EQUAB057':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=albt8',
+  'BGUPC041':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=MMG55',
+  'BGUSC032':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=pyzw3',
+  'ECUML002':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=SHZT9',
+  'EQUML034':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=SHZT9',
+  'ECUML003':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=SHZV9',
+  'BCUPI011':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=PIZO5',
+  'BNUP1017':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=PIZO5',
+  'BGUJF059':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=JFZN3',
+  'BSUJF060':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=JFZN3',
+  'BGZAL001':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=TLZ78',
+  'BSZAL002':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=TLZ78',
+  'ECZML031':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=SHZV1',
+  'EQZML030':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=SHZV1',
+  'BGZSC031':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=pyzt6',
+  'BCZPI014':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=PIZM2',
+  'BCZPI005':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=pizc5',
+  'BNZPI016':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=pizc5',
+  'BGZAB026':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=ALBG7',
+  'BGAAL041':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=tlzg0',
+  'BSAAL045':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=tlzg0',
+  'ECAML002':'https://www.moneydj.com/funddj/yp/yp011001.djhtm?a=shzt7',
+  // 境內基金：yp010000
+  'BGUAB007':'https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=ACTI71',
+  'BSUAB008':'https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=ACTI71',
+  'BGUPC029':'https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=ACCP138',
+  'BSUPC044':'https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=ACCP138',
+};
 const CURRENCY_NAMES={USD:'美元',ZAR:'南非幣',AUD:'澳幣'};
 
 // ===== 用 Netlify Function 抓資料（伺服器端代理）=====
@@ -397,7 +434,16 @@ function App(){
                           }}>
                             {ci===0&&<td rowSpan={group.length}>{cur}</td>}
                             {ci===0&&<td rowSpan={group.length}>{base.agent}</td>}
-                            {ci===0&&<td rowSpan={group.length} style={{maxWidth:'180px',whiteSpace:'normal',lineHeight:1.4,fontSize:'.75rem'}}>{base.name}</td>}
+                            {ci===0&&<td rowSpan={group.length} style={{maxWidth:'180px',whiteSpace:'normal',lineHeight:1.4,fontSize:'.75rem'}}>
+                              {MONEYDJ_URL[base.code]
+                                ? <a href={MONEYDJ_URL[base.code]} target="_blank" rel="noopener noreferrer"
+                                    style={{color:'#1d4ed8',textDecoration:'none',cursor:'pointer'}}
+                                    onMouseOver={e=>e.target.style.textDecoration='underline'}
+                                    onMouseOut={e=>e.target.style.textDecoration='none'}>
+                                    {base.name}
+                                  </a>
+                                : base.name}
+                            </td>}
                             {ci===0&&<td rowSpan={group.length}><span className={`risk-badge ${base.risk_level}`}>{base.risk_level}</span></td>}
                             <td><span className={cfg.dividend_type==='dividend'?'type-div':'type-rein'}>{cfg.dividend_type==='dividend'?'配息':'配股'}</span></td>
                             <td className="code-cell">{cfg.code}</td>
