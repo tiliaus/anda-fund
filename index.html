@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>安達月配基金試算系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans TC',sans-serif;background:#f1f5f9;color:#1e293b;min-height:100vh}
+  .app{max-width:1400px;margin:0 auto;padding:24px 16px}
+  .header{margin-bottom:28px}
+  .header h1{font-size:2rem;font-weight:700;color:#0f172a;margin-bottom:4px}
+  .header p{color:#64748b;font-size:.9rem}
+  .card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:24px;overflow:hidden}
+  .card-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+  .card-header h2{font-size:1rem;font-weight:600;color:#fff}
+  .card-header.blue{background:linear-gradient(135deg,#1d4ed8,#2563eb)}
+  .card-header.slate{background:linear-gradient(135deg,#334155,#475569)}
+  .card-header.green{background:linear-gradient(135deg,#15803d,#16a34a)}
+  .card-header.amber{background:linear-gradient(135deg,#b45309,#d97706)}
+  .card-body{padding:20px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .grid-6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+  @media(max-width:768px){.grid-3,.grid-6{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}}
+  @media(max-width:480px){.grid-3,.grid-6{grid-template-columns:1fr}}
+  .form-group{display:flex;flex-direction:column;gap:6px}
+  .form-group label{font-size:.8rem;font-weight:600;color:#475569}
+  .form-group input,.form-group select{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.9rem;font-family:inherit;color:#1e293b;background:#fff;outline:none;transition:border-color .2s}
+  .form-group input:focus,.form-group select:focus{border-color:#3b82f6}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:none;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+  .btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
+  .btn-primary:disabled{opacity:.6;cursor:not-allowed}
+  .refresh-row{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+  .progress-wrap{flex:1;min-width:200px;max-width:320px}
+  .progress-track{background:#e2e8f0;border-radius:9999px;height:8px;overflow:hidden;margin-bottom:4px}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:9999px;transition:width .3s ease}
+  .progress-label{font-size:.75rem;color:#64748b}
+  .stat-card{border-radius:10px;padding:14px 16px}
+  .stat-card.blue{background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+  .stat-card.purple{background:linear-gradient(135deg,#faf5ff,#ede9fe)}
+  .stat-card.orange{background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+  .stat-card.green{background:linear-gradient(135deg,#f0fdf4,#dcfce7)}
+  .stat-card.red{background:linear-gradient(135deg,#fff1f2,#ffe4e6)}
+  .stat-card.indigo{background:linear-gradient(135deg,#eef2ff,#e0e7ff)}
+  .stat-label{font-size:.75rem;color:#64748b;margin-bottom:4px}
+  .stat-value{font-size:1.4rem;font-weight:700}
+  .stat-value.blue{color:#1d4ed8}.stat-value.purple{color:#7c3aed}
+  .stat-value.orange{color:#c2410c}.stat-value.green{color:#15803d}
+  .stat-value.red{color:#b91c1c}.stat-value.indigo{color:#4338ca}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  thead tr{background:#f8fafc;border-bottom:2px solid #e2e8f0}
+  th{padding:8px 10px;text-align:left;font-weight:600;color:#475569;white-space:nowrap}
+  th.right{text-align:right}th.center{text-align:center}
+  td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#334155;white-space:nowrap}
+  td.right{text-align:right}td.center{text-align:center}
+  tr:hover td{background:#f8fafc}
+  .code-cell{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#64748b}
+  .risk-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.68rem;font-weight:600}
+  .RR2{background:#dbeafe;color:#1d4ed8}.RR3{background:#d1fae5;color:#065f46}.RR4{background:#fef3c7;color:#92400e}
+  .type-div{color:#15803d;font-weight:600;font-size:.72rem}
+  .type-rein{color:#7c3aed;font-weight:600;font-size:.72rem}
+  .alloc-input{width:70px;padding:4px 6px;border:1.5px solid #e2e8f0;border-radius:6px;text-align:center;font-size:.8rem;font-family:inherit;outline:none}
+  .alloc-input:focus{border-color:#3b82f6}
+  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:5px;vertical-align:middle;animation:blink 2s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+  .coi-card{border:2px solid;border-radius:12px;padding:20px}
+  .coi-card.blue{border-color:#93c5fd;background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+  .coi-card.emerald{border-color:#6ee7b7;background:linear-gradient(135deg,#ecfdf5,#d1fae5)}
+  .coi-card h3{font-size:1.1rem;font-weight:700;margin-bottom:16px}
+  .coi-card.blue h3{color:#1e40af}.coi-card.emerald h3{color:#065f46}
+  .coi-row{background:#fff;padding:10px 12px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .coi-row-label{font-size:.8rem;color:#64748b}
+  .coi-row-value{font-size:.95rem;font-weight:600;color:#1e293b}
+  .coi-total{padding:14px 16px;border-radius:10px;color:#fff;display:flex;justify-content:space-between;align-items:center}
+  .coi-total.blue{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
+  .coi-total.emerald{background:linear-gradient(135deg,#059669,#047857)}
+  .coi-total-label{font-size:.85rem}.coi-total-value{font-size:1.4rem;font-weight:700}
+  .diff-section{background:#f8fafc;border-radius:10px;padding:16px;margin-top:16px}
+  .diff-section h4{font-size:.9rem;font-weight:700;color:#334155;margin-bottom:12px}
+  .diff-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e2e8f0;font-size:.82rem}
+  .diff-row:last-child{border-bottom:none}
+  .diff-row-label{color:#64748b}.diff-row-value{font-weight:600}
+  .cheaper{color:#15803d}.pricier{color:#b91c1c}
+  .overflow-x{overflow-x:auto}.space-y>*+*{margin-top:20px}
+  .toast{position:fixed;top:20px;right:20px;padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:500;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15);animation:fadeIn .3s ease;max-width:340px;line-height:1.4}
+  .toast.success{background:#15803d;color:#fff}.toast.info{background:#2563eb;color:#fff}
+  .toast.error{background:#b91c1c;color:#fff}.toast.warning{background:#d97706;color:#fff}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo, useEffect, useCallback } = React;
+
+// ===== 靜態備份資料 =====
+const STATIC_FUND_DATA = {"全球智慧數據股票入息基金A8澳幣":{"latest_nav":8.54,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.056,"currency":"澳幣"}]},"收益成長基金-AMg7月收總收益類股(澳幣)":{"latest_nav":7.8648,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.06085,"currency":"澳幣"}]},"鋒裕匯理基金策略收益債劵(南非幣A穩定月配)":{"latest_nav":341.03,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":4.5196,"currency":"南非幣"}]},"收益成長基金-AM穩定月收類股(南非幣避險)_x0009_":{"latest_nav":103.59,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.962,"currency":"南非幣"}]},"M＆G新興市場債券基金A(南非幣避險月配)F1":{"latest_nav":93.0645,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-20","amount":1.6486,"currency":"南非幣"}]},"環球收益成長A月配固定(C)":{"latest_nav":1896.515,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-25","amount":19.924355,"currency":"南非幣"}]},"多重收益優化組合基金B配息":{"latest_nav":7.89,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-31","amount":0.07,"currency":"美元"}]},"環球收益成長A月配固定":{"latest_nav":132.2168,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-25","amount":1.117839,"currency":"美元"}]},"美國成長基金AP(總報酬月配)":{"latest_nav":67.39,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.8322,"currency":"美元"}]},"全球多元收益基金AD":{"latest_nav":56.33,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.5097,"currency":"美元"}]},"美元綜合債券A2(穩定月配)":{"latest_nav":527.3,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":5.714,"currency":"南非幣"}]},"M&G入息基金A-美元避險月配F":{"latest_nav":76.3458,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-20","amount":0.654,"currency":"美元"}]},"全球智慧數據股票入息基金A6美元":{"latest_nav":9.15,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.0635,"currency":"美元"}]},"鋒裕匯理基金策略收益債劵(美元A穩定月配)_x0009_":{"latest_nav":28.11,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-02-27","amount":0.2392,"currency":"美元"}]},"多重收益基金JPM多重收益(美元對沖)-A股_x0009_":{"latest_nav":73.2,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-09","amount":0.68,"currency":"美元"}]},"全球智慧數據股票入息基金A8":{"latest_nav":107.35,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.885,"currency":"南非幣"}]},"世界科技基金A10":{"latest_nav":15.44,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.144,"currency":"美元"}]},"多元資產收益組合-A|類型(美元)":{"latest_nav":8.99,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-30","amount":0.075,"currency":"美元"}]},"安聯AM-美":{"latest_nav":8.1561,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.055,"currency":"美元"}]},"安聯AMG7-美":{"latest_nav":8.3595,"latest_nav_date":"2026-04-02","dividend_data":[{"basis_date":"2026-03-13","amount":0.06822,"currency":"美元"}]}};
+
+const FUND_NAME_MAPPING = {"收益成長基金-AMg7月收總收益類股(美元)":"安聯AMG7-美","收益成長基金-AM穩定月收類股(美元)":"安聯AM-美","多元資產收益組合-A|類型(美元)":"多元資產收益組合-A|類型(美元)","美國成長基金AP(總報酬月配)":"美國成長基金AP(總報酬月配)","M&G入息基金A-美元避險月配F":"M&G入息基金A-美元避險月配F","環球收益成長A月配固定":"環球收益成長A月配固定","全球智慧數據股票入息基金A6美元":"全球智慧數據股票入息基金A6美元","世界科技基金A10(總報酬穩定配息)":"世界科技基金A10","多重收益優化組合基金B配息":"多重收益優化組合基金B配息","鋒裕匯理基金策略收益債劵(美元A穩定月配)":"鋒裕匯理基金策略收益債劵(美元A穩定月配)_x0009_","多重收益基金JPM多重收益(美元對沖)-A股":"多重收益基金JPM多重收益(美元對沖)-A股_x0009_","收益成長基金-AM穩定月收類股(南非幣避險)":"收益成長基金-AM穩定月收類股(南非幣避險)_x0009_","全球智慧數據股票入息基金A8多幣別穩定月配-南非":"全球智慧數據股票入息基金A8","環球收益成長A月配固定(C)":"環球收益成長A月配固定(C)","美元綜合債券A2(穩定月配)-南非幣":"美元綜合債券A2(穩定月配)","東方匯理基金策略收益債券A南非幣避險(穩定月配息)":"鋒裕匯理基金策略收益債劵(南非幣A穩定月配)","M＆G新興市場債券基金A(南非幣避險月配)F1":"M＆G新興市場債券基金A(南非幣避險月配)F1","全球多元收益基金AD-南非幣":"全球多元收益基金AD","收益成長基金-AMg7月收總收益類股(澳幣)":"收益成長基金-AMg7月收總收益類股(澳幣)","全球智慧數據股票入息基金A8澳幣":"全球智慧數據股票入息基金A8澳幣"};
+
+const FUND_CONFIG = [
+  {currency:'USD',agent:'安聯',name:'收益成長基金-AMg7月收總收益類股(美元)',risk_level:'RR3',code:'BSUAL044',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'安聯',name:'收益成長基金-AMg7月收總收益類股(美元)',risk_level:'RR3',code:'BGUAL040',dividend_type:'dividend'},
+  {currency:'USD',agent:'安聯',name:'收益成長基金-AM穩定月收類股(美元)',risk_level:'RR3',code:'BSUAL001',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'安聯',name:'收益成長基金-AM穩定月收類股(美元)',risk_level:'RR3',code:'BGUAL001',dividend_type:'dividend'},
+  {currency:'USD',agent:'聯博',name:'多元資產收益組合-A|類型(美元)',risk_level:'RR2',code:'BSUAB008',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'聯博',name:'多元資產收益組合-A|類型(美元)',risk_level:'RR2',code:'BGUAB007',dividend_type:'dividend'},
+  {currency:'USD',agent:'聯博',name:'美國成長基金AP(總報酬月配)',risk_level:'RR3',code:'EQUAB057',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'聯博',name:'美國成長基金AP(總報酬月配)',risk_level:'RR3',code:'ECUAB056',dividend_type:'dividend'},
+  {currency:'USD',agent:'富盛',name:'M&G入息基金A-美元避險月配F',risk_level:'RR2',code:'BGUPC041',dividend_type:'dividend'},
+  {currency:'USD',agent:'施羅德',name:'環球收益成長A月配固定',risk_level:'RR3',code:'BGUSC032',dividend_type:'dividend'},
+  {currency:'USD',agent:'貝萊德',name:'全球智慧數據股票入息基金A6美元',risk_level:'RR3',code:'EQUML034',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'貝萊德',name:'全球智慧數據股票入息基金A6美元',risk_level:'RR3',code:'ECUML002',dividend_type:'dividend'},
+  {currency:'USD',agent:'貝萊德',name:'世界科技基金A10(總報酬穩定配息)',risk_level:'RR4',code:'ECUML003',dividend_type:'dividend'},
+  {currency:'USD',agent:'瀚亞',name:'多重收益優化組合基金B配息',risk_level:'RR3',code:'BSUPC044',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'瀚亞',name:'多重收益優化組合基金B配息',risk_level:'RR3',code:'BGUPC029',dividend_type:'dividend'},
+  {currency:'USD',agent:'東方匯理',name:'鋒裕匯理基金策略收益債劵(美元A穩定月配)',risk_level:'RR2',code:'BNUP1017',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'東方匯理',name:'鋒裕匯理基金策略收益債劵(美元A穩定月配)',risk_level:'RR2',code:'BCUPI011',dividend_type:'dividend'},
+  {currency:'USD',agent:'摩根',name:'多重收益基金JPM多重收益(美元對沖)-A股',risk_level:'RR3',code:'BSUJF060',dividend_type:'reinvestment'},
+  {currency:'USD',agent:'摩根',name:'多重收益基金JPM多重收益(美元對沖)-A股',risk_level:'RR3',code:'BGUJF059',dividend_type:'dividend'},
+  {currency:'ZAR',agent:'安聯',name:'收益成長基金-AM穩定月收類股(南非幣避險)',risk_level:'RR3',code:'BSZAL002',dividend_type:'reinvestment'},
+  {currency:'ZAR',agent:'安聯',name:'收益成長基金-AM穩定月收類股(南非幣避險)',risk_level:'RR3',code:'BGZAL001',dividend_type:'dividend'},
+  {currency:'ZAR',agent:'貝萊德',name:'全球智慧數據股票入息基金A8多幣別穩定月配-南非',risk_level:'RR3',code:'EQZML030',dividend_type:'reinvestment'},
+  {currency:'ZAR',agent:'貝萊德',name:'全球智慧數據股票入息基金A8多幣別穩定月配-南非',risk_level:'RR3',code:'ECZML031',dividend_type:'dividend'},
+  {currency:'ZAR',agent:'施羅德',name:'環球收益成長A月配固定(C)',risk_level:'RR3',code:'BGZSC031',dividend_type:'dividend'},
+  {currency:'ZAR',agent:'東方匯理',name:'美元綜合債券A2(穩定月配)-南非幣',risk_level:'RR2',code:'BCZPI014',dividend_type:'dividend'},
+  {currency:'ZAR',agent:'東方匯理',name:'東方匯理基金策略收益債券A南非幣避險(穩定月配息)',risk_level:'RR2',code:'BNZPI016',dividend_type:'reinvestment'},
+  {currency:'ZAR',agent:'東方匯理',name:'東方匯理基金策略收益債券A南非幣避險(穩定月配息)',risk_level:'RR2',code:'BCZPI005',dividend_type:'dividend'},
+  {currency:'ZAR',agent:'聯博',name:'全球多元收益基金AD-南非幣',risk_level:'RR2',code:'BGZAB026',dividend_type:'dividend'},
+  {currency:'AUD',agent:'安聯',name:'收益成長基金-AMg7月收總收益類股(澳幣)',risk_level:'RR3',code:'BSAAL045',dividend_type:'reinvestment'},
+  {currency:'AUD',agent:'安聯',name:'收益成長基金-AMg7月收總收益類股(澳幣)',risk_level:'RR3',code:'BGAAL041',dividend_type:'dividend'},
+  {currency:'AUD',agent:'貝萊德',name:'全球智慧數據股票入息基金A8澳幣',risk_level:'RR3',code:'ECAML002',dividend_type:'dividend'},
+];
+
+const COI_DATA = {"COI":{"rates":{"15":{"male":0.2867,"female":0.1508},"20":{"male":0.52,"female":0.2108},"25":{"male":0.6842,"female":0.2967},"30":{"male":0.8842,"female":0.3342},"35":{"male":1.2767,"female":0.4658},"40":{"male":1.8783,"female":0.685},"45":{"male":2.8483,"female":1.0258},"50":{"male":4.28,"female":1.66},"55":{"male":5.9908,"female":2.5183},"56":{"male":6.4075,"female":2.7292},"57":{"male":6.9333,"female":2.9992},"58":{"male":7.57,"female":3.335},"59":{"male":8.3667,"female":3.7242},"60":{"male":9.1192,"female":4.1533},"61":{"male":9.7333,"female":4.5675},"62":{"male":10.4933,"female":4.9858},"63":{"male":11.4158,"female":5.4642},"64":{"male":12.4842,"female":6.0158},"65":{"male":13.67,"female":6.6608},"70":{"male":21.2967,"female":11.7342},"75":{"male":32.9017,"female":20.2208},"80":{"male":49.9517,"female":34.69},"85":{"male":75.8775,"female":58.015},"90":{"male":116.0308,"female":97.2775},"95":{"male":180.2433,"female":170.7058},"100":{"male":277.485,"female":292.9408}},"k_table":{"30":1.9,"40":1.6,"50":1.4,"60":1.2,"70":1.1,"90":1.02,"100":1},"mgmt_fee2_rate":0.00165},"COI-富貴":{"rates":{"15":{"male":0.2467,"female":0.1083},"20":{"male":0.36,"female":0.1483},"25":{"male":0.4133,"female":0.2},"30":{"male":0.5475,"female":0.2608},"35":{"male":0.8142,"female":0.3683},"40":{"male":1.2733,"female":0.545},"45":{"male":2.0142,"female":0.8475},"50":{"male":2.885,"female":1.1867},"55":{"male":4.2167,"female":1.7958},"56":{"male":4.5133,"female":1.9208},"57":{"male":4.835,"female":2.0625},"58":{"male":5.185,"female":2.2233},"59":{"male":5.565,"female":2.4058},"60":{"male":6.2175,"female":2.7692},"65":{"male":9.3858,"female":4.6658},"70":{"male":15.4233,"female":8.095},"75":{"male":23.9033,"female":13.6083},"80":{"male":37.6492,"female":23.9892},"85":{"male":58.4625,"female":41.2817},"90":{"male":90.6783,"female":71.9883},"95":{"male":140.0733,"female":124.1433},"100":{"male":214.8742,"female":208.315}},"k_table":{"30":1.9,"40":1.6,"50":1.4,"60":1.2,"70":1.1,"90":1.02,"100":1},"mgmt_fee2_rate":0.002}};
+
+const CURRENCY_ORDER=['USD','ZAR','AUD'];
+const CURRENCY_NAMES={USD:'美元',ZAR:'南非幣',AUD:'澳幣'};
+
+// ===== 用 Netlify Function 抓資料（伺服器端代理）=====
+async function fetchViaProxy(code, type) {
+  const url = `/api/fund-proxy?code=${code}&type=${type}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+function parseNav(json) {
+  try {
+    const items = json?.data?.items;
+    if (Array.isArray(items) && items.length > 0) {
+      const first = items[0];
+      const dr = first.date || first.navDate;
+      const ds = typeof dr==='number' ? new Date(dr*1000).toISOString().split('T')[0] : (dr||'');
+      return { latest_nav: first.nav || first.price || 0, latest_nav_date: ds };
+    }
+    const rows = json?.items?.data || json?.data;
+    if (Array.isArray(rows) && rows.length > 0) {
+      const r = rows[0];
+      const nav = Array.isArray(r) ? r[1] : (r.nav||r.price||0);
+      const dr = Array.isArray(r) ? r[0] : (r.date||0);
+      const ds = typeof dr==='number' ? new Date(dr*1000).toISOString().split('T')[0] : (dr||'');
+      return { latest_nav: nav, latest_nav_date: ds };
+    }
+  } catch(e){}
+  return null;
+}
+
+function parseDiv(json) {
+  try {
+    const items = json?.data?.items || json?.items || json?.data || [];
+    if (!Array.isArray(items)||!items.length) return null;
+    return items.slice(0,3).map(d => ({
+      basis_date: d.recordDate||d.basisDate||d.basis_date||(d.date?(typeof d.date==='number'?new Date(d.date*1000).toISOString().split('T')[0]:d.date):''),
+      amount: Number(d.cashDividend??d.dividend??d.amount??d.divAmount??0),
+      currency: d.currency||'',
+    })).filter(d=>d.amount>0);
+  } catch(e){}
+  return null;
+}
+
+function getUniqueFunds() {
+  const seen=new Set(), res=[];
+  FUND_CONFIG.forEach(f=>{
+    const dk=FUND_NAME_MAPPING[f.name]||f.name;
+    if(!seen.has(dk)){seen.add(dk);res.push({code:f.code,dataKey:dk});}
+  });
+  return res;
+}
+
+function getFundInfo(name,fd){return fd[FUND_NAME_MAPPING[name]||name]||null;}
+function getKValue(age,kt){const aa=Object.keys(kt).map(Number).sort((a,b)=>a-b);for(let i=aa.length-1;i>=0;i--)if(age>=aa[i])return kt[aa[i]];return kt[aa[0]]||1;}
+function getCOIRate(age,gender,rates){const s=String(age);if(rates[s])return rates[s][gender];const aa=Object.keys(rates).map(Number).sort((a,b)=>a-b);for(let i=aa.length-1;i>=0;i--)if(age>=aa[i])return rates[aa[i]][gender];return rates[aa[0]][gender]||0;}
+function calcCOI(inv,age,gender,cfg,fr){const f1=inv<300?100:0,f2=inv*10000*fr,ft=f1+f2,kv=getKValue(age,cfg.k_table),cr=getCOIRate(age,gender,cfg.rates),mc=cr*kv*inv,rc=mc*1.1;return{mgmt_fee1:f1,mgmt_fee2:f2,mgmt_fee_total:ft,k_value:kv,monthly_coi:mc,risk_cost:rc,monthly_fee_total:ft+rc};}
+
+function App(){
+  const[inv,setInv]=useState(100);
+  const[age,setAge]=useState(55);
+  const[gender,setGender]=useState('female');
+  const[allocs,setAllocs]=useState({});
+  const[fundData,setFundData]=useState(STATIC_FUND_DATA);
+  const[dataDate,setDataDate]=useState('2026-04-02（內建備份）');
+  const[refreshing,setRefreshing]=useState(false);
+  const[progress,setProgress]=useState({cur:0,total:0});
+  const[toast,setToast]=useState(null);
+  const[isLive,setIsLive]=useState(false);
+
+  useEffect(()=>{
+    const d={};
+    FUND_CONFIG.forEach(f=>{d[`${f.code}|${f.dividend_type}`]=0;});
+    setAllocs(d);
+  },[]);
+
+  const showToast=(msg,type='success')=>{setToast({msg,type});setTimeout(()=>setToast(null),4500);};
+
+  const handleRefresh=useCallback(async()=>{
+    setRefreshing(true);setIsLive(false);
+    const list=getUniqueFunds();
+    setProgress({cur:0,total:list.length});
+    const nd={...fundData};
+    let ok=0,fail=0;
+    const today=new Date().toISOString().split('T')[0];
+    for(let i=0;i<list.length;i++){
+      const{code,dataKey}=list[i];
+      setProgress({cur:i+1,total:list.length});
+      try{
+        const[navJson,divJson]=await Promise.all([
+          fetchViaProxy(code,'nav'),
+          fetchViaProxy(code,'div'),
+        ]);
+        const np=parseNav(navJson), dp=parseDiv(divJson);
+        if(np&&np.latest_nav>0){
+          nd[dataKey]={...(nd[dataKey]||{}),latest_nav:np.latest_nav,latest_nav_date:np.latest_nav_date||today,
+            dividend_data:dp&&dp.length>0?dp:(nd[dataKey]?.dividend_data||[])};
+          ok++;
+        }else{fail++;}
+      }catch(e){fail++;}
+      await new Promise(r=>setTimeout(r,100));
+    }
+    setFundData(nd);setProgress({cur:0,total:0});setRefreshing(false);
+    if(ok>0){
+      setIsLive(true);setDataDate(`${today}（即時更新）`);
+      showToast(fail===0?`✅ 全部 ${ok} 支基金更新成功！`:`⚠️ ${ok} 支成功，${fail} 支使用備份資料`,fail===0?'success':'warning');
+    }else{
+      showToast('❌ 伺服器代理無法連線到鉅亨網，顯示內建備份資料','error');
+    }
+  },[fundData]);
+
+  const handleAlloc=(code,dtype,val)=>{
+    setAllocs(prev=>({...prev,[`${code}|${dtype}`]:Math.max(0,Math.min(100,Number(val)))}));
+  };
+
+  const fundGroups=useMemo(()=>{
+    const m=new Map();
+    FUND_CONFIG.forEach(f=>{const k=`${f.currency}|${f.agent}|${f.name}`;if(!m.has(k))m.set(k,[]);m.get(k).push(f);});
+    return Array.from(m.values());
+  },[]);
+
+  const summary=useMemo(()=>{
+    let dr=0,rr=0,dt=0,rt=0;
+    FUND_CONFIG.forEach(f=>{
+      const k=`${f.code}|${f.dividend_type}`,a=allocs[k]||0;
+      const info=getFundInfo(f.name,fundData);if(!info)return;
+      const div=info.dividend_data?.[0],nav=info.latest_nav||0,amt=div?.amount||0;
+      const m=nav>0?(inv*10000*a/100)/nav*amt:0;
+      f.dividend_type==='dividend'?(dr+=a,dt+=m):(rr+=a,rt+=m);
+    });
+    return{dr,rr,total:dr+rr,dt,rt,ar:inv>0?(dt/(inv*10000))*12*100:0};
+  },[allocs,inv,fundData]);
+
+  const coi=useMemo(()=>({
+    nw:calcCOI(inv,age,gender,COI_DATA.COI,0.00165),
+    rw:calcCOI(inv,age,gender,COI_DATA['COI-富貴'],0.002),
+  }),[inv,age,gender]);
+
+  const pct=progress.total>0?(progress.cur/progress.total)*100:0;
+
+  return(
+    <div className="app">
+      {toast&&<div className={`toast ${toast.type}`}>{toast.msg}</div>}
+      <div className="header">
+        <h1>🏦 安達月配基金試算系統</h1>
+        <p>{isLive&&<span className="live-dot"/>}資料日期：{dataDate}</p>
+      </div>
+
+      <div className="card">
+        <div className="card-header blue"><h2>基本設定</h2></div>
+        <div className="card-body">
+          <div className="grid-3">
+            <div className="form-group"><label>投入金額（萬元）</label>
+              <input type="number" value={inv} min="0" onChange={e=>setInv(Math.max(0,Number(e.target.value)))}/>
+            </div>
+            <div className="form-group"><label>年齡</label>
+              <input type="number" value={age} min="15" max="100" onChange={e=>setAge(Math.max(15,Math.min(100,Number(e.target.value))))}/>
+            </div>
+            <div className="form-group"><label>性別</label>
+              <select value={gender} onChange={e=>setGender(e.target.value)}>
+                <option value="male">男性</option><option value="female">女性</option>
+              </select>
+            </div>
+          </div>
+          <div className="refresh-row">
+            {refreshing&&(
+              <div className="progress-wrap">
+                <div className="progress-track"><div className="progress-bar" style={{width:`${pct}%`}}/></div>
+                <div className="progress-label">更新中 {progress.cur}/{progress.total} 支基金...</div>
+              </div>
+            )}
+            <button className="btn btn-primary" onClick={handleRefresh} disabled={refreshing}>
+              {refreshing?'⟳ 更新中...':'⟳ 重新整理即時資料'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y">
+        {CURRENCY_ORDER.map(cur=>{
+          const groups=fundGroups.filter(g=>g[0]?.currency===cur);
+          if(!groups.length)return null;
+          return(
+            <div className="card" key={cur}>
+              <div className="card-header slate"><h2>{CURRENCY_NAMES[cur]}基金</h2></div>
+              <div className="card-body"><div className="overflow-x">
+                <table>
+                  <thead><tr>
+                    <th>幣別</th><th>總代理</th><th>標的名稱</th><th>風險</th>
+                    <th>配息方式</th><th>代碼</th>
+                    <th className="center">佔比H(%)</th><th className="right">月配息I</th>
+                    <th>基準日J</th><th className="right">配息率K(%)</th>
+                    <th className="right">配息金額L</th><th className="right">最近淨值M</th>
+                    <th className="right">最近配息率N(%)</th>
+                  </tr></thead>
+                  <tbody>
+                    {groups.map(group=>{
+                      const base=group[0],info=getFundInfo(base.name,fundData);
+                      const div=info?.dividend_data?.[0],nav=info?.latest_nav||0,amt=div?.amount||0;
+                      const bDate=div?.basis_date||'-',kRate=nav>0&&amt>0?((amt/nav)*12*100).toFixed(2):'-';
+                      return group.map((cfg,ci)=>{
+                        const k=`${cfg.code}|${cfg.dividend_type}`,a=allocs[k]||0;
+                        const m=nav>0?(inv*10000*a/100)/nav*amt:0;
+                        return(
+                          <tr key={cfg.code}>
+                            {ci===0&&<td rowSpan={group.length}>{cur}</td>}
+                            {ci===0&&<td rowSpan={group.length}>{base.agent}</td>}
+                            {ci===0&&<td rowSpan={group.length} style={{maxWidth:'180px',whiteSpace:'normal',lineHeight:1.4,fontSize:'.75rem'}}>{base.name}</td>}
+                            {ci===0&&<td rowSpan={group.length}><span className={`risk-badge ${base.risk_level}`}>{base.risk_level}</span></td>}
+                            <td><span className={cfg.dividend_type==='dividend'?'type-div':'type-rein'}>{cfg.dividend_type==='dividend'?'配息':'配股'}</span></td>
+                            <td className="code-cell">{cfg.code}</td>
+                            <td className="center"><input className="alloc-input" type="number" value={a} min="0" max="100" onChange={e=>handleAlloc(cfg.code,cfg.dividend_type,e.target.value)}/></td>
+                            <td className="right">{a>0?m.toFixed(4):'-'}</td>
+                            {ci===0&&<td rowSpan={group.length}>{bDate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className="right">{kRate}</td>}
+                            {ci===0&&<td rowSpan={group.length} className="right">{amt>0?amt.toFixed(4):'-'}</td>}
+                            {ci===0&&<td rowSpan={group.length} className="right">{nav>0?nav.toFixed(4):'-'}</td>}
+                            {ci===0&&<td rowSpan={group.length} className="right">{kRate}</td>}
+                          </tr>
+                        );
+                      });
+                    })}
+                  </tbody>
+                </table>
+              </div></div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="card" style={{marginTop:'20px'}}>
+        <div className="card-header green"><h2>配息彙總</h2></div>
+        <div className="card-body">
+          <div className="grid-6">
+            <div className="stat-card blue"><div className="stat-label">配息佔比</div><div className="stat-value blue">{summary.dr.toFixed(2)}%</div></div>
+            <div className="stat-card purple"><div className="stat-label">配股佔比</div><div className="stat-value purple">{summary.rr.toFixed(2)}%</div></div>
+            <div className="stat-card orange"><div className="stat-label">合計比率</div><div className="stat-value orange">{summary.total.toFixed(2)}%</div></div>
+            <div className="stat-card green"><div className="stat-label">月配息合計</div><div className="stat-value green">{summary.dt.toFixed(2)}</div></div>
+            <div className="stat-card red"><div className="stat-label">配股合計</div><div className="stat-value red">{summary.rt.toFixed(2)}</div></div>
+            <div className="stat-card indigo"><div className="stat-label">年化配息率</div><div className="stat-value indigo">{summary.ar.toFixed(2)}%</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="card-header amber"><h2>保險成本比較</h2></div>
+        <div className="card-body">
+          <div className="grid-2">
+            {[{label:'新天生贏家',data:coi.nw,rl:'0.165%',color:'blue'},{label:'富貴大贏家',data:coi.rw,rl:'0.2%',color:'emerald'}].map(({label,data,rl,color})=>(
+              <div key={label} className={`coi-card ${color}`}>
+                <h3>{label}</h3>
+                <div className="coi-row"><span className="coi-row-label">管理費 1</span><span className="coi-row-value">NT${data.mgmt_fee1.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">管理費 2 ({rl})</span><span className="coi-row-value">NT${data.mgmt_fee2.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">管理費合計</span><span className="coi-row-value">NT${data.mgmt_fee_total.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">K 值倍數</span><span className="coi-row-value">{data.k_value.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">月 COI</span><span className="coi-row-value">NT${data.monthly_coi.toFixed(2)}</span></div>
+                <div className="coi-row"><span className="coi-row-label">危險成本 (月COI×1.1)</span><span className="coi-row-value">NT${data.risk_cost.toFixed(2)}</span></div>
+                <div className={`coi-total ${color}`}>
+                  <span className="coi-total-label">每月費用合計</span>
+                  <span className="coi-total-value">NT${data.monthly_fee_total.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="diff-section">
+            <h4>📊 成本差異分析</h4>
+            {[
+              {label:'管理費差異',val:coi.rw.mgmt_fee_total-coi.nw.mgmt_fee_total,pos:'新天生贏家較便宜',neg:'富貴大贏家較便宜'},
+              {label:'危險成本差異',val:coi.nw.risk_cost-coi.rw.risk_cost,pos:'富貴大贏家較便宜',neg:'新天生贏家較便宜'},
+              {label:'每月費用差異',val:coi.rw.monthly_fee_total-coi.nw.monthly_fee_total,pos:'新天生贏家較便宜',neg:'富貴大贏家較便宜'},
+            ].map(({label,val,pos,neg})=>(
+              <div className="diff-row" key={label}>
+                <span className="diff-row-label">{label}</span>
+                <span className={`diff-row-value ${val>0?'cheaper':'pricier'}`}>NT${Math.abs(val).toFixed(2)}（{val>0?pos:neg}）</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>,document.getElementById('root'));
+</script>
+</body>
+</html>
