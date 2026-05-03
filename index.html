@@ -329,6 +329,7 @@ function App(){
             latest_nav: np.latest_nav,
             latest_nav_date: np.latest_nav_date || today,
             dividend_data: dp && dp.length > 0 ? dp : (nd[dataKey]?.dividend_data || []),
+            ...(navJson?.risk_level ? {risk_level: navJson.risk_level} : {}),
           };
           ok++;
         } else { fail++; }
@@ -474,8 +475,8 @@ function App(){
                                   </a>
                                 : base.name}
                             </td>}
-                            {ci===0&&<td rowSpan={group.length} className='col-risk'><span className={`risk-badge ${base.risk_level}`}>{base.risk_level}</span></td>}
-                            <td className='col-dtype'><span className={cfg.dividend_type==='dividend'?'type-div':'type-rein'}>{cfg.dividend_type==='dividend'?'配息':'配股'}</span></td>
+                            {ci===0&&<td rowSpan={group.length} className='col-risk'><span className={`risk-badge ${getFundInfo(base.name,fundData)?.risk_level||base.risk_level}`}>{getFundInfo(base.name,fundData)?.risk_level||base.risk_level}</span></td>}
+                            <td className='col-dtype'><span className={cfg.dividend_type==='dividend'?'type-div':'type-rein'}>{cfg.dividend_type==='dividend'?'配現':'配股'}</span></td>
                             <td className="code-cell col-code">{cfg.code}</td>
                             <td className="center col-alloc"><input className="alloc-input" type="number" value={a} min="0" max="100" onChange={e=>handleAlloc(cfg.code,cfg.dividend_type,e.target.value)}/></td>
                             <td className="right col-monthly">{a>0?m.toFixed(4):'-'}</td>
