@@ -51,8 +51,10 @@ async function fetchPage(url) {
 }
 
 // 解析境外基金淨值（yp011001）：class="t3n2"
+// 同時解析風險報酬等級（MoneyDJ 頁面中的 RR1~RR5）
 function parseNavForeign(html) {
-  let nav = null, date = null;
+  let nav = null, date = null, risk_level = null;
+
   const t3 = html.match(/<td[^>]*class="t3n[12]"[^>]*>([\d,]+\.[\d]{2,6})<\/td>/i);
   if (t3) {
     const v = parseFloat(t3[1].replace(/,/g, ''));
@@ -73,7 +75,12 @@ function parseNavForeign(html) {
       if (!best || n > best) best = n;
     }
   }
-  return { nav, date: best };
+
+  // 解析風險報酬等級：MoneyDJ 頁面中出現 RR1~RR5
+  const rrMatch = html.match(/RR[1-5]/);
+  if (rrMatch) risk_level = rrMatch[0];
+
+  return { nav, date: best, risk_level };
 }
 
 // 解析境內基金淨值（yp010000）：不同 HTML 結構
@@ -212,7 +219,7 @@ module.exports = async (req, res) => {
       }
 
       if (result && result.nav) {
-        res.status(200).json({ ok: true, djCode, code, latest_nav: result.nav, latest_nav_date: result.date });
+        res.status(200).json({ ok: true, djCode, code, latest_nav: result.nav, latest_nav_date: result.date, risk_level: result.risk_level||null });
       } else {
         res.status(404).json({ error: '無法取得淨值資料', djCode });
       }
