@@ -1,6 +1,4 @@
 // Vercel Serverless Function：從 MoneyDJ 取得基金即時資料
-// 境外基金：yp011001/yp011000 + wb05配息
-// 境內基金（聯博AI、瀚亞）：yp010000 + funddividend配息
 
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36',
@@ -15,7 +13,7 @@ const CODE_MAP = {
   'BSUAL044': { code: 'TLZF9',   type: 'foreign' },
   'BGUAL001': { code: 'TLZ64',   type: 'foreign' },
   'BSUAL001': { code: 'TLZ64',   type: 'foreign' },
-  'BGUAB007': { code: 'ACTI71',  type: 'domestic' }, // 聯博多元資產AI（境內）
+  'BGUAB007': { code: 'ACTI71',  type: 'domestic' },
   'BSUAB008': { code: 'ACTI71',  type: 'domestic' },
   'ECUAB056': { code: 'albt8',   type: 'foreign' },
   'EQUAB057': { code: 'albt8',   type: 'foreign' },
@@ -24,7 +22,7 @@ const CODE_MAP = {
   'ECUML002': { code: 'SHZT9',   type: 'foreign' },
   'EQUML034': { code: 'SHZT9',   type: 'foreign' },
   'ECUML003': { code: 'SHZV9',   type: 'foreign' },
-  'BGUPC029': { code: 'ACCP138', type: 'domestic' }, // 瀚亞多重收益（境內）
+  'BGUPC029': { code: 'ACCP138', type: 'domestic' },
   'BSUPC044': { code: 'ACCP138', type: 'domestic' },
   'BCUPI011': { code: 'PIZO5',   type: 'foreign' },
   'BNUP1017': { code: 'PIZO5',   type: 'foreign' },
@@ -50,10 +48,38 @@ async function fetchPage(url) {
   return res.text();
 }
 
+// 共用：從 HTML 解析 RR1~RR5 風險等級
+function parseRiskLevel(html) {
+  // 多種格式：RR3、>RR3<、風險報酬等級...RR3
+  const patterns = [
+    /風險報酬等級[^<]{0,30}(RR[1-5])/,
+    />(RR[1-5])</,
+    /\b(RR[1-5])\b/,
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+// 共用：從 HTML 解析最新日期
+function parseBestDate(html) {
+  let best = null;
+  const dates = html.match(/\d{4}\/\d{1,2}\/\d{1,2}/g) || [];
+  for (const d of dates) {
+    const p = d.split('/');
+    if (parseInt(p[0]) >= 2020) {
+      const n = p[0] + '-' + p[1].padStart(2,'0') + '-' + p[2].padStart(2,'0');
+      if (!best || n > best) best = n;
+    }
+  }
+  return best;
+}
+
 // 解析境外基金淨值（yp011001）：class="t3n2"
-// 同時解析風險報酬等級（MoneyDJ 頁面中的 RR1~RR5）
 function parseNavForeign(html) {
-  let nav = null, date = null, risk_level = null;
+  let nav = null;
 
   const t3 = html.match(/<td[^>]*class="t3n[12]"[^>]*>([\d,]+\.[\d]{2,6})<\/td>/i);
   if (t3) {
@@ -67,28 +93,14 @@ function parseNavForeign(html) {
       if (v >= 0.1 && v <= 50000) { nav = v; break; }
     }
   }
-  let best = null;
-  for (const d of (html.match(/\d{4}\/\d{1,2}\/\d{1,2}/g) || [])) {
-    const p = d.split('/');
-    if (parseInt(p[0]) >= 2020) {
-      const n = p[0]+'-'+p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0');
-      if (!best || n > best) best = n;
-    }
-  }
 
-  // 解析風險報酬等級：MoneyDJ 頁面中出現 RR1~RR5
-  const rrMatch = html.match(/RR[1-5]/);
-  if (rrMatch) risk_level = rrMatch[0];
-
-  return { nav, date: best, risk_level };
+  return { nav, date: parseBestDate(html), risk_level: parseRiskLevel(html) };
 }
 
-// 解析境內基金淨值（yp010000）：不同 HTML 結構
+// 解析境內基金淨值（yp010000）
 function parseNavDomestic(html) {
-  let nav = null, date = null;
+  let nav = null;
 
-  // yp010000 格式：最新淨值在特定位置
-  // 從截圖看：表格中「最新淨值」欄位
   const patterns = [
     /<td[^>]*class="t3n[12]"[^>]*>([\d,]+\.[\d]{2,6})<\/td>/i,
     /<td[^>]*>([\d]+\.[\d]{4})<\/td>/g,
@@ -112,15 +124,7 @@ function parseNavDomestic(html) {
     if (nav) break;
   }
 
-  let best = null;
-  for (const d of (html.match(/\d{4}\/\d{1,2}\/\d{1,2}/g) || [])) {
-    const p = d.split('/');
-    if (parseInt(p[0]) >= 2020) {
-      const n = p[0]+'-'+p[1].padStart(2,'0')+'-'+p[2].padStart(2,'0');
-      if (!best || n > best) best = n;
-    }
-  }
-  return { nav, date: best };
+  return { nav, date: parseBestDate(html), risk_level: parseRiskLevel(html) };
 }
 
 // 解析境外基金配息（wb05）
@@ -145,7 +149,6 @@ function parseDivForeign(html) {
 }
 
 // 解析境內基金配息（funddividend）
-// 欄位：配息基準日 | 除息日 | 發放日 | 狀態 | 每單位分配金額 | 年化配息率(%)
 function parseDivDomestic(html) {
   const divs = [];
   const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
@@ -163,6 +166,42 @@ function parseDivDomestic(html) {
     if (divs.length >= 3) break;
   }
   return divs;
+}
+
+async function fetchNav(djCode, isDomestic) {
+  if (isDomestic) {
+    try {
+      const html = await fetchPage(`https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=${djCode}`);
+      const r = parseNavDomestic(html);
+      if (r.nav) return r;
+    } catch {}
+  } else {
+    for (const page of ['yp011001', 'yp011000']) {
+      try {
+        const html = await fetchPage(`https://www.moneydj.com/funddj/yp/${page}.djhtm?a=${djCode}`);
+        const r = parseNavForeign(html);
+        if (r.nav) return r;
+      } catch {}
+    }
+  }
+  return null;
+}
+
+async function fetchDiv(djCode, isDomestic) {
+  if (isDomestic) {
+    try {
+      const html = await fetchPage(`https://www.moneydj.com/funddj/yp/funddividend.djhtm?a=${djCode}`);
+      const divs = parseDivDomestic(html);
+      if (divs.length > 0) return divs;
+    } catch {}
+  } else {
+    try {
+      const html = await fetchPage(`https://www.moneydj.com/funddj/yp/wb05.djhtm?a=${djCode}`);
+      const divs = parseDivForeign(html);
+      if (divs.length > 0) return divs;
+    } catch {}
+  }
+  return null;
 }
 
 module.exports = async (req, res) => {
@@ -184,42 +223,21 @@ module.exports = async (req, res) => {
 
   try {
     if (type === 'div') {
-      let divs = null;
-      if (isDomestic) {
-        // 境內基金配息頁面
-        const html = await fetchPage(`https://www.moneydj.com/funddj/yp/funddividend.djhtm?a=${djCode}`);
-        divs = parseDivDomestic(html);
-      } else {
-        // 境外基金配息頁面
-        const html = await fetchPage(`https://www.moneydj.com/funddj/yp/wb05.djhtm?a=${djCode}`);
-        divs = parseDivForeign(html);
-      }
-
+      const divs = await fetchDiv(djCode, isDomestic);
       if (divs && divs.length > 0) {
         res.status(200).json({ ok: true, djCode, code, dividend_data: divs });
       } else {
         res.status(404).json({ error: '無法取得配息資料', djCode });
       }
-
     } else {
-      // 淨值
-      let result = null;
-      if (isDomestic) {
-        const html = await fetchPage(`https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=${djCode}`);
-        result = parseNavDomestic(html);
-      } else {
-        // 嘗試 yp011001 和 yp011000
-        for (const page of ['yp011001', 'yp011000']) {
-          try {
-            const html = await fetchPage(`https://www.moneydj.com/funddj/yp/${page}.djhtm?a=${djCode}`);
-            const r = parseNavForeign(html);
-            if (r.nav) { result = r; break; }
-          } catch {}
-        }
-      }
-
+      const result = await fetchNav(djCode, isDomestic);
       if (result && result.nav) {
-        res.status(200).json({ ok: true, djCode, code, latest_nav: result.nav, latest_nav_date: result.date, risk_level: result.risk_level||null });
+        res.status(200).json({
+          ok: true, djCode, code,
+          latest_nav: result.nav,
+          latest_nav_date: result.date,
+          risk_level: result.risk_level || null,
+        });
       } else {
         res.status(404).json({ error: '無法取得淨值資料', djCode });
       }
