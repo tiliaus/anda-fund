@@ -13,8 +13,8 @@ const CODE_MAP = {
   'BSUAL044': { code: 'TLZF9',   type: 'foreign' },
   'BGUAL001': { code: 'TLZ64',   type: 'foreign' },
   'BSUAL001': { code: 'TLZ64',   type: 'foreign' },
-  'BGUAB007': { code: 'ACTI71',  type: 'foreign', navPage: 'yp011000' },
-  'BSUAB008': { code: 'ACTI71',  type: 'foreign', navPage: 'yp011000' },
+  'BGUAB007': { code: 'ACTI71',  type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
+  'BSUAB008': { code: 'ACTI71',  type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
   'ECUAB056': { code: 'albt8',   type: 'foreign' },
   'EQUAB057': { code: 'albt8',   type: 'foreign' },
   'BGUPC041': { code: 'MMG55',   type: 'foreign' },
@@ -22,8 +22,8 @@ const CODE_MAP = {
   'ECUML002': { code: 'SHZT9',   type: 'foreign' },
   'EQUML034': { code: 'SHZT9',   type: 'foreign' },
   'ECUML003': { code: 'SHZV9',   type: 'foreign' },
-  'BGUPC029': { code: 'ACCP138', type: 'foreign', navPage: 'yp011000' },
-  'BSUPC044': { code: 'ACCP138', type: 'foreign', navPage: 'yp011000' },
+  'BGUPC029': { code: 'ACCP138', type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
+  'BSUPC044': { code: 'ACCP138', type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
   'BCUPI011': { code: 'PIZO5',   type: 'foreign' },
   'BNUP1017': { code: 'PIZO5',   type: 'foreign' },
   'BGUJF059': { code: 'JFZN3',   type: 'foreign' },
@@ -191,8 +191,9 @@ async function fetchNav(djCode, isDomestic, navPage) {
   return null;
 }
 
-async function fetchDiv(djCode, isDomestic) {
-  if (isDomestic) {
+async function fetchDiv(djCode, isDomestic, divPage) {
+  // 若指定 divPage=funddividend，用境內配息格式
+  if (isDomestic || divPage === 'funddividend') {
     try {
       const html = await fetchPage(`https://www.moneydj.com/funddj/yp/funddividend.djhtm?a=${djCode}`);
       const divs = parseDivDomestic(html);
@@ -227,7 +228,7 @@ module.exports = async (req, res) => {
 
   try {
     if (type === 'div') {
-      const divs = await fetchDiv(djCode, isDomestic);
+      const divs = await fetchDiv(djCode, isDomestic, mapping.divPage||null);
       if (divs && divs.length > 0) {
         res.status(200).json({ ok: true, djCode, code, dividend_data: divs });
       } else {
