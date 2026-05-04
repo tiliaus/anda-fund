@@ -280,10 +280,19 @@ function App(){
   const[ageInput,setAgeInput]=useState('55');
   const[gender,setGender]=useState('female');
   const[allocs,setAllocs]=useState({});
-  const[fundData,setFundData]=useState(()=>{
+  const DATA_VERSION = '2';  // 每次結構改變時遞增
+const[fundData,setFundData]=useState(()=>{
     try{
-      const saved=localStorage.getItem('anda_fund_data');
-      if(saved){const parsed=JSON.parse(saved);if(Object.keys(parsed).length>0)return parsed;}
+      const ver=localStorage.getItem('anda_data_version');
+      if(ver===DATA_VERSION){
+        const saved=localStorage.getItem('anda_fund_data');
+        if(saved){const parsed=JSON.parse(saved);if(Object.keys(parsed).length>0)return parsed;}
+      } else {
+        // 版本不符，清除舊資料
+        localStorage.removeItem('anda_fund_data');
+        localStorage.removeItem('anda_data_date');
+        localStorage.setItem('anda_data_version', DATA_VERSION);
+      }
     }catch(e){}
     return STATIC_FUND_DATA;
   });
@@ -337,7 +346,7 @@ function App(){
       await new Promise(r=>setTimeout(r,100));
     }
     setFundData(nd);
-    try{localStorage.setItem('anda_fund_data',JSON.stringify(nd));}catch(e){}
+    try{localStorage.setItem('anda_fund_data',JSON.stringify(nd));localStorage.setItem('anda_data_version',DATA_VERSION);}catch(e){}
     setProgress({cur:0,total:0});setRefreshing(false);
     if(ok>0){
       setIsLive(true);setDataDate(`${today}（即時更新）`);try{localStorage.setItem('anda_data_date',`${today}（即時更新）`);}catch(e){}
