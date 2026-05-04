@@ -13,8 +13,8 @@ const CODE_MAP = {
   'BSUAL044': { code: 'TLZF9',   type: 'foreign' },
   'BGUAL001': { code: 'TLZ64',   type: 'foreign' },
   'BSUAL001': { code: 'TLZ64',   type: 'foreign' },
-  'BGUAB007': { code: 'ACTI71',  type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
-  'BSUAB008': { code: 'ACTI71',  type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
+  'BGUAB007': { code: 'ACTI71',  navPage: 'yp010000', rrPage: 'yp011000', divPage: 'funddividend' },
+  'BSUAB008': { code: 'ACTI71',  navPage: 'yp010000', rrPage: 'yp011000', divPage: 'funddividend' },
   'ECUAB056': { code: 'albt8',   type: 'foreign' },
   'EQUAB057': { code: 'albt8',   type: 'foreign' },
   'BGUPC041': { code: 'MMG55',   type: 'foreign' },
@@ -22,8 +22,8 @@ const CODE_MAP = {
   'ECUML002': { code: 'SHZT9',   type: 'foreign' },
   'EQUML034': { code: 'SHZT9',   type: 'foreign' },
   'ECUML003': { code: 'SHZV9',   type: 'foreign' },
-  'BGUPC029': { code: 'ACCP138', type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
-  'BSUPC044': { code: 'ACCP138', type: 'foreign', navPage: 'yp011000', divPage: 'funddividend' },
+  'BGUPC029': { code: 'ACCP138', navPage: 'yp010000', rrPage: 'yp011000', divPage: 'funddividend' },
+  'BSUPC044': { code: 'ACCP138', navPage: 'yp010000', rrPage: 'yp011000', divPage: 'funddividend' },
   'BCUPI011': { code: 'PIZO5',   type: 'foreign' },
   'BNUP1017': { code: 'PIZO5',   type: 'foreign' },
   'BGUJF059': { code: 'JFZN3',   type: 'foreign' },
@@ -168,25 +168,39 @@ function parseDivDomestic(html) {
   return divs;
 }
 
-async function fetchNav(djCode, isDomestic, navPage) {
-  if (isDomestic) {
+async function fetchNav(djCode, mapping) {
+  const navPage = mapping.navPage;
+  const rrPage  = mapping.rrPage;
+
+  // yp010000：境內基金淨值頁（ya/ 路徑）
+  if (navPage === 'yp010000') {
+    let nav = null, date = null, risk_level = null;
     try {
       const html = await fetchPage(`https://www.moneydj.com/funddj/ya/yp010000.djhtm?a=${djCode}`);
       const r = parseNavDomestic(html);
-      if (r.nav) return r;
+      nav = r.nav; date = r.date; risk_level = r.risk_level;
     } catch {}
-  } else {
-    // 若有指定頁面則優先，否則依序嘗試
-    const pages = navPage
-      ? [navPage, ...['yp011001','yp011000'].filter(p=>p!==navPage)]
-      : ['yp011001', 'yp011000'];
-    for (const page of pages) {
+    // 若 risk_level 沒抓到，從 rrPage 補抓
+    if (!risk_level && rrPage) {
       try {
-        const html = await fetchPage(`https://www.moneydj.com/funddj/yp/${page}.djhtm?a=${djCode}`);
-        const r = parseNavForeign(html);
-        if (r.nav) return r;
+        const html2 = await fetchPage(`https://www.moneydj.com/funddj/yp/${rrPage}.djhtm?a=${djCode}`);
+        risk_level = parseRiskLevel(html2);
       } catch {}
     }
+    if (nav) return { nav, date, risk_level };
+    return null;
+  }
+
+  // 境外基金：依序嘗試指定頁面
+  const pages = navPage
+    ? [navPage, ...['yp011001','yp011000'].filter(p=>p!==navPage)]
+    : ['yp011001', 'yp011000'];
+  for (const page of pages) {
+    try {
+      const html = await fetchPage(`https://www.moneydj.com/funddj/yp/${page}.djhtm?a=${djCode}`);
+      const r = parseNavForeign(html);
+      if (r.nav) return r;
+    } catch {}
   }
   return null;
 }
@@ -235,7 +249,7 @@ module.exports = async (req, res) => {
         res.status(404).json({ error: '無法取得配息資料', djCode });
       }
     } else {
-      const result = await fetchNav(djCode, isDomestic, mapping.navPage||null);
+      const result = await fetchNav(djCode, mapping);
       if (result && result.nav) {
         res.status(200).json({
           ok: true, djCode, code,
