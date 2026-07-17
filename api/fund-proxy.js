@@ -40,6 +40,7 @@ const CODE_MAP = {
   'BGAAL041': { code: 'tlzg0',   type: 'foreign' },
   'BSAAL045': { code: 'tlzg0',   type: 'foreign' },
   'ECAML002': { code: 'shzt7',   type: 'foreign' },
+  'BGTAL088': { code: 'ACDD145', navPage: 'yp010000', rrPage: 'yp011000', divPage: 'funddividend' },
 };
 
 async function fetchPage(url) {
